@@ -218,12 +218,12 @@ export default function CentsJogWheel() {
 
   // Fine-adjust button row (shared between game and normal mode)
   const FINE_STEPS = [
+    { label: '−5¢', delta: -5 },
     { label: '−1¢', delta: -1 },
     { label: '−0.1¢', delta: -0.1 },
-    { label: '−0.01¢', delta: -0.01 },
-    { label: '+0.01¢', delta: 0.01 },
     { label: '+0.1¢', delta: 0.1 },
     { label: '+1¢', delta: 1 },
+    { label: '+5¢', delta: 5 },
   ] as const;
 
   const btnStyle = {

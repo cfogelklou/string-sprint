@@ -113,3 +113,78 @@ export const GRADE_THRESHOLDS = {
 } as const;
 
 export const TUNING_SIM_CENTS_RANGE = 50;
+
+// ---------------------------------------------------------------------------
+// PTA (Piano Tuning Assistant) testing mode
+// ---------------------------------------------------------------------------
+
+/** Octave alignment style for PTA stretch curve generation. */
+export type OctaveStyle = '4:2' | '6:3' | 'pure-12ths' | 'concert-grand';
+
+/** PTA wizard step. */
+export type PTAStep = 'setup' | 'bridge-break' | 'measure' | 'review' | 'results';
+
+/** Bridge break defaults per piano type (MIDI note numbers).
+ *  Smaller piano → higher bridge break (wound strings extend further). */
+export const PTA_BRIDGE_BREAK_DEFAULTS: Record<PianoProfileName, number> = {
+  [PIANO_PROFILE_NAMES.CONCERT_GRAND]: MIDI_A0 + 23, // MIDI 44 (C#3)
+  [PIANO_PROFILE_NAMES.STUDIO_GRAND]: MIDI_A0 + 24,  // MIDI 45 (D3)
+  [PIANO_PROFILE_NAMES.BABY_GRAND]: MIDI_A0 + 25,    // MIDI 46 (D#3)
+  [PIANO_PROFILE_NAMES.UPRIGHT]: MIDI_A0 + 26,       // MIDI 47 (E3)
+  [PIANO_PROFILE_NAMES.CONSOLE]: MIDI_A0 + 27,       // MIDI 48 (F3)
+  [PIANO_PROFILE_NAMES.SPINET]: MIDI_A0 + 29,        // MIDI 50 (D3)
+} as const;
+
+/** Sample notes for B measurement (MIDI note numbers). */
+export const PTA_SAMPLE_NOTES = [
+  { name: 'A1', midi: 33 },
+  { name: 'E2', midi: 40 },
+  { name: 'B2', midi: 47 },
+  { name: 'E3', midi: 52 },
+  { name: 'A3', midi: 57 },
+  { name: 'A4', midi: 69 },
+  { name: 'A5', midi: 81 },
+  { name: 'A6', midi: 93 },
+] as const;
+
+/** Partial alignment configuration per octave style. */
+export const OCTAVE_ALIGNMENTS: Record<
+  OctaveStyle,
+  { lowerPartial: number; upperPartial: number; semitoneSpan: number }
+> = {
+  '4:2': { lowerPartial: 4, upperPartial: 2, semitoneSpan: 12 },
+  '6:3': { lowerPartial: 6, upperPartial: 3, semitoneSpan: 12 },
+  'pure-12ths': { lowerPartial: 3, upperPartial: 1, semitoneSpan: 19 },
+  'concert-grand': { lowerPartial: 4, upperPartial: 2, semitoneSpan: 12 },
+} as const;
+
+/** A single sample note measurement in PTA mode. */
+export interface PTASampleMeasurement {
+  /** Note name (e.g., "A1"). */
+  noteName: string;
+  /** MIDI note number. */
+  midi: number;
+  /** True B coefficient from the active profile (ground truth). */
+  trueB: number;
+  /** User's measured B coefficient (entered from Strobopro). Null if not yet measured. */
+  measuredB: number | null;
+  /** Absolute error |measuredB - trueB|. Null if not yet measured. */
+  error: number | null;
+  /** Relative error as percentage. Null if not yet measured. */
+  relativeErrorPct: number | null;
+  /** Whether this sample has been measured. */
+  captured: boolean;
+}
+
+/** B value input validation bounds. */
+export const B_INPUT_MIN = 0.00001;
+export const B_INPUT_MAX = 0.1;
+
+/** PTA grading thresholds for sample measurement (mean relative B error %). */
+export const PTA_MEASUREMENT_GRADE_THRESHOLDS = {
+  A_PLUS: 2,
+  A: 5,
+  B: 10,
+  C: 15,
+  D: 25,
+} as const;

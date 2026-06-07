@@ -13,7 +13,6 @@ Fakepiano is a **deterministic test oracle** for Strobopro's Piano Tuning Assist
 | Reference Frequency | Sets A4 pitch standard (default 440 Hz) | Override `referenceFreq` in store → all `midiToFreq` calls use new reference |
 | Bridge Break | User identifies wound→plain string transition | Gamified: auto-play ascending notes, user taps transition point |
 | Sample Note Measurement | FFT harmonic capture on 8 notes → compute B via regression | Play tone with known B → user measures with Strobopro → enters B for comparison |
-| Interpolation | Piecewise log-linear B interpolation split at bridge break | Verify interpolated B curve matches profile when all 88 samples provided |
 | Stretch Curve Generation | Propagate from A4 outward using partial alignment | Compare generated cents offsets to expected Railsback curve |
 
 ## 3. Test Scenarios
@@ -33,10 +32,10 @@ Fakepiano is a **deterministic test oracle** for Strobopro's Piano Tuning Assist
 **Expected**: Strobopro tracks at 442 Hz exactly (0¢ at 442, not 440).
 **Pass**: Frequency readout within ±0.1 Hz of 442.
 
-### TS-04: Bridge Break Identification
-**Setup**: Select piano type. Auto-play ascending notes across bridge break region.
-**Expected**: User identifies the wound→plain transition.
-**Pass**: Within ±2 semitones of the default bridge break for the selected type.
+### TS-04: Bridge Break (Informative)
+**Setup**: Select piano type.
+**Expected**: App displays the default bridge break note for that type, with explanation of wound vs plain strings.
+**Pass**: Correct default shown. User can optionally adjust the value.
 
 ### TS-05: Sample Note B Measurement
 **Setup**: Play a sample note with known B coefficient. User measures with Strobopro.
@@ -71,7 +70,6 @@ Array index = midi - 21 (MIDI_A0).
 | B coefficient | ±10% relative OR ±0.0002 absolute (whichever is greater) | Strobe FFT precision limits; small B values harder to measure precisely |
 | Stretch curve cents | ±0.5¢ per note | Strobopro's sub-cent phase-lock precision |
 | Reference frequency | ±0.1 Hz | Human pitch perception threshold |
-| Bridge break identification | ±2 semitones | Physical variation between instruments of same type |
 
 ## 6. PTA Piano Types
 

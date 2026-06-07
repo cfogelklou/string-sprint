@@ -1,15 +1,32 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
 import { MIDI_A0, NUM_KEYS } from '@/types';
 import { midiToNoteName, isBlackKey } from '@/model/pianoNotes';
 
 const WHITE_KEY_WIDTH = 44;
 const BLACK_KEY_WIDTH = 28;
-const WHITE_KEY_HEIGHT = 160;
-const BLACK_KEY_HEIGHT = 100;
+const MIN_WHITE_HEIGHT = 100;
+const MIN_BLACK_HEIGHT = 60;
 
 export default function VirtualKeyboard() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(160);
+
+  // Measure container and scale key heights
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const whiteKeyHeight = Math.max(MIN_WHITE_HEIGHT, containerHeight);
+  const blackKeyHeight = Math.max(MIN_BLACK_HEIGHT, containerHeight * 0.6);
 
   const activeTones = usePianoStore((s) => s.activeTones);
   const selectedKeyId = usePianoStore((s) => s.selectedKeyId);
@@ -114,7 +131,7 @@ export default function VirtualKeyboard() {
         style={{
           position: 'relative',
           width: totalWidth,
-          height: WHITE_KEY_HEIGHT,
+          height: whiteKeyHeight,
         }}
       >
         {/* White keys */}
@@ -134,7 +151,7 @@ export default function VirtualKeyboard() {
                 left: x,
                 top: 0,
                 width: WHITE_KEY_WIDTH - 1,
-                height: WHITE_KEY_HEIGHT,
+                height: whiteKeyHeight,
                 background: isActive
                   ? 'var(--color-accent, #4a9eff)'
                   : 'var(--color-text, #ffffff)',
@@ -205,7 +222,7 @@ export default function VirtualKeyboard() {
                 left: x,
                 top: 0,
                 width: BLACK_KEY_WIDTH,
-                height: BLACK_KEY_HEIGHT,
+                height: blackKeyHeight,
                 background: isActive
                   ? 'var(--color-accent, #4a9eff)'
                   : '#1a1a2e',

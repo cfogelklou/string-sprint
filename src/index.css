@@ -33,31 +33,38 @@ html, body, #root {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: auto auto auto auto auto auto 1fr;
+  grid-template-rows: auto auto auto auto 10px minmax(45vh, 1fr);
   grid-template-columns: 1fr;
   overflow: hidden;
 }
 
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-text-dim);
-  z-index: 10;
-}
-
-.app-header h1 {
-  margin: 0;
-  font-size: 1.1rem;
+.controls-bar-title {
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--color-text);
+  white-space: nowrap;
 }
 
-.header-controls {
+.controls-bar-volume {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.controls-bar-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.controls-bar-btn.active {
+  background: var(--color-primary);
 }
 
 .status-area {
@@ -110,89 +117,6 @@ html, body, #root {
   overflow-y: hidden;
   background-color: var(--color-bg);
   -webkit-overflow-scrolling: touch;
-}
-
-/* ------------------------------------------------------------------ */
-/* Landscape breakpoint (480px+)                                       */
-/* ------------------------------------------------------------------ */
-
-@media (min-width: 480px) and (orientation: landscape) {
-  #fakepiano-app {
-    grid-template-columns: 40% 60%;
-    grid-template-rows: auto 1fr auto;
-  }
-
-  .app-header {
-    grid-column: 1 / -1;
-  }
-
-  .status-area {
-    grid-column: 1;
-  }
-
-  .cents-area {
-    grid-column: 1;
-  }
-
-  .controls-bar {
-    grid-column: 1;
-  }
-
-  .tuning-sim-area {
-    grid-column: 1;
-  }
-
-  .minimap-area {
-    grid-column: 1 / -1;
-  }
-
-  .keyboard-area {
-    grid-column: 2;
-    grid-row: 2 / 4;
-    min-height: 0;
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* Desktop breakpoint (960px+)                                         */
-/* ------------------------------------------------------------------ */
-
-@media (min-width: 960px) {
-  #fakepiano-app {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto 1fr;
-  }
-
-  .app-header {
-    grid-column: 1;
-  }
-
-  .status-area {
-    grid-column: 1;
-  }
-
-  .cents-area {
-    grid-column: 1;
-    min-height: 60px;
-  }
-
-  .controls-bar {
-    grid-column: 1;
-  }
-
-  .tuning-sim-area {
-    grid-column: 1;
-    display: flex; /* show sim area on desktop */
-  }
-
-  .minimap-area {
-    grid-column: 1;
-  }
-
-  .keyboard-area {
-    grid-column: 1;
-    min-height: 160px;
-  }
 }
 
 /* ------------------------------------------------------------------ */

@@ -16,7 +16,6 @@ export default function CentsJogWheel() {
   const keys = usePianoStore((s) => s.keys);
   const setCentsOffset = usePianoStore((s) => s.setCentsOffset);
   const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
-  const tuningSimTargets = usePianoStore((s) => s.tuningSimTargets);
 
   const keyIndex = selectedKeyId !== null ? selectedKeyId - MIDI_A0 : -1;
   const currentCents = keyIndex >= 0 && keyIndex < keys.length ? keys[keyIndex].centsOffset : 0;
@@ -284,26 +283,13 @@ export default function CentsJogWheel() {
     );
   }
 
-  // Game mode: show direction label + proximity bar, no exact cents
+  // Game mode: NO feedback — just drag/buttons and a neutral label
   if (isPlaying) {
-    const target = keyIndex >= 0 ? tuningSimTargets[keyIndex] : 0;
-    const distance = displayValue - target;
-    const absDistance = Math.abs(distance);
-    const fillRatio = Math.max(0, 1 - absDistance / 25);
-
-    // Color: red → yellow → green
-    const r = fillRatio < 0.5 ? 255 : Math.round(255 * (1 - (fillRatio - 0.5) * 2));
-    const g = fillRatio < 0.5 ? Math.round(170 * fillRatio * 2) : Math.round(170 + (230 - 170) * (fillRatio - 0.5) * 2);
-    const b = fillRatio >= 0.95 ? 118 : Math.round(68 * (1 - fillRatio));
-    const barColor = `rgb(${r},${g},${b})`;
-
-    const direction = distance > 0.5 ? '♯ Sharp' : distance < -0.5 ? '♭ Flat' : '✓ In Tune';
-
     return (
       <div
         style={{
           position: 'relative',
-          minHeight: 96,
+          minHeight: 80,
           background: 'var(--color-surface)',
           borderRadius: 8,
           overflow: 'hidden',
@@ -321,7 +307,7 @@ export default function CentsJogWheel() {
           {ticks}
         </div>
 
-        {/* Tuning control display */}
+        {/* Neutral display — no sharp/flat hint */}
         <div
           style={{
             position: 'relative',
@@ -329,49 +315,17 @@ export default function CentsJogWheel() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 6,
-            minHeight: 96,
+            gap: 4,
+            minHeight: 80,
             zIndex: 1,
             padding: '8px 16px',
           }}
         >
-          {/* Direction label */}
-          <span
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              color: barColor,
-              letterSpacing: 1,
-            }}
-          >
-            {direction}
+          <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text-dim)' }}>
+            Tune this note
           </span>
-
-          {/* Proximity bar */}
-          <div
-            style={{
-              width: '85%',
-              height: 16,
-              borderRadius: 8,
-              background: 'rgba(255,255,255,0.08)',
-              overflow: 'hidden',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <div
-              style={{
-                width: `${fillRatio * 100}%`,
-                height: '100%',
-                borderRadius: 8,
-                background: barColor,
-                transition: 'width 0.1s ease-out, background 0.1s ease-out',
-              }}
-            />
-          </div>
-
-          {/* Drag hint */}
           <span style={{ fontSize: 10, color: 'var(--color-text-dim)', opacity: 0.4 }}>
-            ← swipe to tune → or use buttons below
+            ← swipe → or buttons below · use your ear!
           </span>
         </div>
 

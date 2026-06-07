@@ -1,0 +1,265 @@
+import { create } from 'zustand';
+import {
+  PianoKey,
+  ToneConfig,
+  PianoProfileName,
+  RigaudParams,
+  AUDIO_CONFIG,
+  PIANO_PROFILE_NAMES,
+  MIDI_A0,
+  NUM_KEYS,
+} from '@/types';
+import { PIANO_B_PROFILES } from '@/bCoefficients/profiles';
+import { generateProfile, DEFAULT_RIGAUD_PARAMS } from '@/bCoefficients/rigaud';
+import { generate88Keys, midiToFreq } from '@/model/pianoNotes';
+
+// ---------------------------------------------------------------------------
+// State shape
+// ---------------------------------------------------------------------------
+
+interface PianoState {
+  // Audio
+  isAudioInitialized: boolean;
+  masterVolume: number;
+  sustainDuration: number;
+  numPartials: number;
+
+  // B coefficients
+  activeProfile: PianoProfileName;
+  customParams: RigaudParams;
+  useCustomProfile: boolean;
+
+  // Piano keys
+  keys: PianoKey[];
+
+  // Selection
+  selectedKeyId: number | null;
+
+  // Active tones
+  activeTones: Map<number, ToneConfig>;
+
+  // Tuning simulation
+  tuningSimMode: boolean;
+  tuningSimTargetMidi: number | null;
+  tuningSimCompleted: Set<number>;
+
+  // UI state
+  isBCurveEditorOpen: boolean;
+}
+
+const TUNING_SIM_CENTS_RANGE = 50;
+
+const DEFAULT_PIANO_STATE: PianoState = {
+  isAudioInitialized: false,
+  masterVolume: 0.8,
+  sustainDuration: 2.0,
+  numPartials: AUDIO_CONFIG.MAX_PARTIALS,
+  activeProfile: PIANO_PROFILE_NAMES.UPRIGHT,
+  customParams: { ...DEFAULT_RIGAUD_PARAMS[PIANO_PROFILE_NAMES.UPRIGHT] },
+  useCustomProfile: false,
+  keys: generate88Keys(PIANO_B_PROFILES[PIANO_PROFILE_NAMES.UPRIGHT]),
+  selectedKeyId: null,
+  activeTones: new Map(),
+  tuningSimMode: false,
+  tuningSimTargetMidi: null,
+  tuningSimCompleted: new Set(),
+  isBCurveEditorOpen: false,
+};
+
+// ---------------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------------
+
+interface PianoActions {
+  initAudio: () => void;
+  setProfile: (name: PianoProfileName) => void;
+  selectKey: (midi: number | null) => void;
+  playNote: (midi: number) => void;
+  stopNote: (midi: number) => void;
+  stopAll: () => void;
+  setCentsOffset: (midi: number, cents: number) => void;
+  setMasterVolume: (v: number) => void;
+  setNumPartials: (n: number) => void;
+  setCustomParam: (key: keyof RigaudParams, value: number) => void;
+  setUseCustomProfile: (use: boolean) => void;
+  toggleBCurveEditor: () => void;
+  enableTuningSim: () => void;
+  disableTuningSim: () => void;
+  resetTuning: () => void;
+  setTuningSimTarget: (midi: number) => void;
+}
+
+type PianoStore = PianoState & PianoActions;
+
+// ---------------------------------------------------------------------------
+// Helper: regenerate keys preserving centsOffsets
+// ---------------------------------------------------------------------------
+
+function regenerateKeys(
+  bProfile: number[],
+  prevKeys: PianoKey[],
+): PianoKey[] {
+  const offsets = new Map<number, number>();
+  for (const k of prevKeys) {
+    offsets.set(k.midiNote, k.centsOffset);
+  }
+  const fresh = generate88Keys(bProfile);
+  return fresh.map((k) => ({
+    ...k,
+    centsOffset: offsets.get(k.midiNote) ?? 0,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------------
+
+export const usePianoStore = create<PianoStore>()((set, get) => ({
+  ...DEFAULT_PIANO_STATE,
+
+  initAudio: () => {
+    set({ isAudioInitialized: true });
+  },
+
+  setProfile: (name: PianoProfileName) => {
+    const { keys, useCustomProfile } = get();
+    if (useCustomProfile) {
+      const bProfile = generateProfile(DEFAULT_RIGAUD_PARAMS[name]);
+      set({
+        activeProfile: name,
+        customParams: { ...DEFAULT_RIGAUD_PARAMS[name] },
+        keys: regenerateKeys(bProfile, keys),
+      });
+    } else {
+      const bProfile = PIANO_B_PROFILES[name];
+      set({
+        activeProfile: name,
+        customParams: { ...DEFAULT_RIGAUD_PARAMS[name] },
+        keys: regenerateKeys(bProfile, keys),
+      });
+    }
+  },
+
+  selectKey: (midi: number | null) => {
+    set({ selectedKeyId: midi });
+  },
+
+  playNote: (midi: number) => {
+    const { keys, numPartials, sustainDuration, activeTones } = get();
+    const keyIndex = midi - MIDI_A0;
+    const key = keys[keyIndex];
+    if (!key) return;
+
+    const tone: ToneConfig = {
+      frequency: midiToFreq(midi),
+      B: key.B,
+      centsOffset: key.centsOffset,
+      numPartials,
+      sustainDuration,
+    };
+
+    const nextTones = new Map(activeTones);
+    nextTones.set(midi, tone);
+    set({ activeTones: nextTones });
+  },
+
+  stopNote: (midi: number) => {
+    const { activeTones } = get();
+    if (!activeTones.has(midi)) return;
+    const nextTones = new Map(activeTones);
+    nextTones.delete(midi);
+    set({ activeTones: nextTones });
+  },
+
+  stopAll: () => {
+    set({ activeTones: new Map() });
+  },
+
+  setCentsOffset: (midi: number, cents: number) => {
+    const { keys } = get();
+    const keyIndex = midi - MIDI_A0;
+    if (keyIndex < 0 || keyIndex >= NUM_KEYS) return;
+    const nextKeys = [...keys];
+    nextKeys[keyIndex] = { ...nextKeys[keyIndex], centsOffset: cents };
+    set({ keys: nextKeys });
+  },
+
+  setMasterVolume: (v: number) => {
+    set({ masterVolume: v });
+  },
+
+  setNumPartials: (n: number) => {
+    set({ numPartials: n });
+  },
+
+  setCustomParam: (paramKey: keyof RigaudParams, value: number) => {
+    const { customParams, useCustomProfile, keys } = get();
+    const nextParams = { ...customParams, [paramKey]: value };
+    if (useCustomProfile) {
+      const bProfile = generateProfile(nextParams);
+      set({
+        customParams: nextParams,
+        keys: regenerateKeys(bProfile, keys),
+      });
+    } else {
+      set({ customParams: nextParams });
+    }
+  },
+
+  setUseCustomProfile: (use: boolean) => {
+    const { customParams, keys } = get();
+    if (use) {
+      const bProfile = generateProfile(customParams);
+      set({
+        useCustomProfile: true,
+        keys: regenerateKeys(bProfile, keys),
+      });
+    } else {
+      const { activeProfile } = get();
+      const bProfile = PIANO_B_PROFILES[activeProfile];
+      set({
+        useCustomProfile: false,
+        keys: regenerateKeys(bProfile, keys),
+      });
+    }
+  },
+
+  toggleBCurveEditor: () => {
+    set((s) => ({ isBCurveEditorOpen: !s.isBCurveEditorOpen }));
+  },
+
+  enableTuningSim: () => {
+    const { keys } = get();
+    const nextKeys = keys.map((k) => ({
+      ...k,
+      centsOffset: (Math.random() * 2 - 1) * TUNING_SIM_CENTS_RANGE,
+    }));
+    set({
+      tuningSimMode: true,
+      keys: nextKeys,
+      tuningSimCompleted: new Set(),
+      tuningSimTargetMidi: null,
+    });
+  },
+
+  disableTuningSim: () => {
+    const { keys } = get();
+    const nextKeys = keys.map((k) => ({ ...k, centsOffset: 0 }));
+    set({
+      tuningSimMode: false,
+      keys: nextKeys,
+      tuningSimCompleted: new Set(),
+      tuningSimTargetMidi: null,
+    });
+  },
+
+  resetTuning: () => {
+    const { keys } = get();
+    const nextKeys = keys.map((k) => ({ ...k, centsOffset: 0 }));
+    set({ keys: nextKeys });
+  },
+
+  setTuningSimTarget: (midi: number) => {
+    set({ tuningSimTargetMidi: midi });
+  },
+}));

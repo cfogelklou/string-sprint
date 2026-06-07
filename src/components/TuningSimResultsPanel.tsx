@@ -275,6 +275,66 @@ export default function TuningSimResultsPanel() {
           <StatRow label="Within 2.0¢" value={`${withinTwoCents}/${total}`} />
         </div>
 
+        {/* Per-note detail list */}
+        <div
+          style={{
+            flex: '1 1 auto',
+            overflowY: 'auto',
+            padding: '4px 16px 8px',
+            minHeight: 0,
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '40px 1fr 1fr 1fr 24px',
+              gap: 0,
+              fontSize: 11,
+              color: 'var(--color-text-dim)',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              paddingBottom: 4,
+              marginBottom: 4,
+              fontWeight: 600,
+            }}
+          >
+            <span>Note</span>
+            <span style={{ textAlign: 'right' }}>Target</span>
+            <span style={{ textAlign: 'right' }}>Yours</span>
+            <span style={{ textAlign: 'right' }}>Error</span>
+            <span />
+          </div>
+          {notes.map((note) => {
+            const absError = Math.abs(note.error);
+            const color = absError < 0.5 ? '#00e676' : absError < 1 ? '#7bc67b' : absError < 2 ? '#ffaa00' : '#ff4444';
+            const emoji = absError < 0.5 ? '✓' : absError < 2 ? '~' : '✗';
+            return (
+              <div
+                key={note.midiNote}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '40px 1fr 1fr 1fr 24px',
+                  gap: 0,
+                  fontSize: 12,
+                  padding: '3px 0',
+                  borderBottom: '1px solid rgba(255,255,255,0.04)',
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>{midiNoteToName(note.midiNote)}</span>
+                <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                  {note.targetCents >= 0 ? '+' : ''}{note.targetCents.toFixed(1)}¢
+                </span>
+                <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                  {note.userCents >= 0 ? '+' : ''}{note.userCents.toFixed(1)}¢
+                </span>
+                <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', color, fontWeight: 600 }}>
+                  {note.error >= 0 ? '+' : ''}{note.error.toFixed(1)}¢
+                </span>
+                <span style={{ textAlign: 'center', color }}>{emoji}</span>
+              </div>
+            );
+          })}
+        </div>
+
         {/* Action buttons */}
         <div
           style={{

@@ -1,21 +1,43 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
 import { MIDI_A0, NUM_KEYS } from '@/types';
 import { midiToNoteName, isBlackKey } from '@/model/pianoNotes';
 
 const WHITE_KEY_WIDTH = 44;
 const BLACK_KEY_WIDTH = 28;
-const WHITE_KEY_HEIGHT = 160;
-const BLACK_KEY_HEIGHT = 100;
+const MIN_WHITE_HEIGHT = 100;
+const MIN_BLACK_HEIGHT = 60;
 
 export default function VirtualKeyboard() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(160);
+
+  // Measure container and scale key heights
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const whiteKeyHeight = Math.max(MIN_WHITE_HEIGHT, containerHeight);
+  const blackKeyHeight = Math.max(MIN_BLACK_HEIGHT, containerHeight * 0.6);
 
   const activeTones = usePianoStore((s) => s.activeTones);
   const selectedKeyId = usePianoStore((s) => s.selectedKeyId);
   const playNote = usePianoStore((s) => s.playNote);
   const stopNote = usePianoStore((s) => s.stopNote);
   const selectKey = usePianoStore((s) => s.selectKey);
+  const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
+  const tuningSimCompleted = usePianoStore((s) => s.tuningSimCompleted);
+  const tuningSimTargetMidi = usePianoStore((s) => s.tuningSimTargetMidi);
+
+  const isPlaying = tuningSimPhase === 'playing';
 
   // Build layout: positions for white keys and black keys
   const whiteKeyPositions: { midi: number; x: number; index: number }[] = [];
@@ -35,7 +57,6 @@ export default function VirtualKeyboard() {
   for (let i = 0; i < NUM_KEYS; i++) {
     const midi = MIDI_A0 + i;
     if (isBlackKey(midi)) {
-      // Place black key centered on boundary between previous and next white key
       const x = whiteCount * WHITE_KEY_WIDTH - BLACK_KEY_WIDTH / 2;
       blackKeyPositions.push({ midi, x, whiteIndex: whiteCount });
     } else {
@@ -110,7 +131,7 @@ export default function VirtualKeyboard() {
         style={{
           position: 'relative',
           width: totalWidth,
-          height: WHITE_KEY_HEIGHT,
+          height: whiteKeyHeight,
         }}
       >
         {/* White keys */}
@@ -119,6 +140,8 @@ export default function VirtualKeyboard() {
           const isSelected = selectedKeyId === midi;
           const name = midiToNoteName(midi);
           const isALabel = name.startsWith('A');
+          const isCommitted = isPlaying && tuningSimCompleted.has(midi);
+          const isTarget = isPlaying && tuningSimTargetMidi === midi;
 
           return (
             <div
@@ -128,13 +151,15 @@ export default function VirtualKeyboard() {
                 left: x,
                 top: 0,
                 width: WHITE_KEY_WIDTH - 1,
-                height: WHITE_KEY_HEIGHT,
+                height: whiteKeyHeight,
                 background: isActive
                   ? 'var(--color-accent, #4a9eff)'
                   : 'var(--color-text, #ffffff)',
                 border: isSelected
                   ? '3px solid var(--color-accent, #4a9eff)'
-                  : '1px solid #ccc',
+                  : isTarget
+                    ? '3px solid #ff6600'
+                    : '1px solid #ccc',
                 borderRadius: '0 0 4px 4px',
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -148,6 +173,7 @@ export default function VirtualKeyboard() {
                 boxSizing: 'border-box',
                 zIndex: 1,
                 transition: 'background 0.05s',
+                animation: isTarget ? 'pulse-target 1.5s ease-in-out infinite' : undefined,
               }}
               onPointerDown={handlePointerDown(midi)}
               onPointerUp={handlePointerUp(midi)}
@@ -165,6 +191,18 @@ export default function VirtualKeyboard() {
                   {name}
                 </span>
               )}
+              {isCommitted && (
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: '#00e676',
+                    pointerEvents: 'none',
+                    marginTop: 2,
+                  }}
+                >
+                  ✓
+                </span>
+              )}
             </div>
           );
         })}
@@ -173,6 +211,8 @@ export default function VirtualKeyboard() {
         {blackKeyPositions.map(({ midi, x }) => {
           const isActive = activeTones.has(midi);
           const isSelected = selectedKeyId === midi;
+          const isCommitted = isPlaying && tuningSimCompleted.has(midi);
+          const isTarget = isPlaying && tuningSimTargetMidi === midi;
 
           return (
             <div
@@ -182,13 +222,15 @@ export default function VirtualKeyboard() {
                 left: x,
                 top: 0,
                 width: BLACK_KEY_WIDTH,
-                height: BLACK_KEY_HEIGHT,
+                height: blackKeyHeight,
                 background: isActive
                   ? 'var(--color-accent, #4a9eff)'
                   : '#1a1a2e',
                 border: isSelected
                   ? '3px solid var(--color-accent, #4a9eff)'
-                  : '1px solid #000',
+                  : isTarget
+                    ? '3px solid #ff6600'
+                    : '1px solid #000',
                 borderRadius: '0 0 3px 3px',
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -197,11 +239,28 @@ export default function VirtualKeyboard() {
                 zIndex: 2,
                 boxSizing: 'border-box',
                 transition: 'background 0.05s',
+                animation: isTarget ? 'pulse-target 1.5s ease-in-out infinite' : undefined,
               }}
               onPointerDown={handlePointerDown(midi)}
               onPointerUp={handlePointerUp(midi)}
               onPointerLeave={handlePointerLeave(midi)}
-            />
+            >
+              {isCommitted && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: 4,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: 10,
+                    color: '#00e676',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  ✓
+                </span>
+              )}
+            </div>
           );
         })}
       </div>

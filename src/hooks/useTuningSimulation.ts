@@ -1,22 +1,24 @@
-import { useMemo } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
-
-const TUNED_THRESHOLD = 0.5; // cents
+import { NUM_KEYS } from '@/types';
 
 export function useTuningSimulation() {
-  const tuningSimMode = usePianoStore((s) => s.tuningSimMode);
-  const keys = usePianoStore((s) => s.keys);
+  const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
   const tuningSimCompleted = usePianoStore((s) => s.tuningSimCompleted);
-
-  const tunedCount = useMemo(
-    () => keys.filter((k) => Math.abs(k.centsOffset) < TUNED_THRESHOLD).length,
-    [keys],
-  );
+  const tuningSimResults = usePianoStore((s) => s.tuningSimResults);
+  const tuningSimStretch = usePianoStore((s) => s.tuningSimStretch);
+  const tuningSimTargetMidi = usePianoStore((s) => s.tuningSimTargetMidi);
+  const tuningSimUserCommits = usePianoStore((s) => s.tuningSimUserCommits);
 
   return {
-    isActive: tuningSimMode,
-    tunedCount,
-    totalCount: keys.length,
-    completedCount: tuningSimCompleted.size,
+    phase: tuningSimPhase,
+    isActive: tuningSimPhase !== 'idle',
+    isPlaying: tuningSimPhase === 'playing',
+    isRevealed: tuningSimPhase === 'revealed',
+    stretch: tuningSimStretch,
+    committedCount: tuningSimCompleted.size,
+    totalKeys: NUM_KEYS,
+    results: tuningSimResults,
+    targetMidi: tuningSimTargetMidi,
+    userCommits: tuningSimUserCommits,
   };
 }

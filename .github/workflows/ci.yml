@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+    types:
+      - labeled
+      - unlabeled
+      - synchronize
+      - opened
+      - edited
+      - ready_for_review
+      - reopened
+      - unlocked
+
+  push:
+    branches:
+      - main
+      - devel
+      - gamify
+    tags:
+      - "*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  ID_RSA_PRIV: ${{ secrets.ID_RSA_PRIV }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build, lint, test & deploy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: bun install
+        run: bun install
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build
+        run: bun run build
+
+      - name: Test
+        run: bun run test
+
+      - name: Deploy via SFTP
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/gamify')
+        run: |
+          echo "$ID_RSA_PRIV" > id_rsa_sftp
+          chmod 600 id_rsa_sftp
+          ./scripts/deploy.sh
+          rm id_rsa_sftp

@@ -15,6 +15,9 @@ export default function CentsJogWheel() {
   const selectedKeyId = usePianoStore((s) => s.selectedKeyId);
   const keys = usePianoStore((s) => s.keys);
   const setCentsOffset = usePianoStore((s) => s.setCentsOffset);
+  const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
+  const playNote = usePianoStore((s) => s.playNote);
+  const stopNote = usePianoStore((s) => s.stopNote);
 
   const keyIndex = selectedKeyId !== null ? selectedKeyId - MIDI_A0 : -1;
   const currentCents = keyIndex >= 0 && keyIndex < keys.length ? keys[keyIndex].centsOffset : 0;
@@ -106,7 +109,7 @@ export default function CentsJogWheel() {
       const now = performance.now();
       const dt = now - d.lastTime;
       if (dt > 0) {
-        d.velocity = ((clientX - d.lastX) / dt) * 16; // scale to ~1 frame
+        d.velocity = ((clientX - d.lastX) / dt) * 16;
       }
       d.lastX = clientX;
       d.lastTime = now;
@@ -133,7 +136,6 @@ export default function CentsJogWheel() {
     return () => stopInertia();
   }, [stopInertia]);
 
-  // -- Touch handlers
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
       e.preventDefault();
@@ -154,7 +156,6 @@ export default function CentsJogWheel() {
     handleDragEnd();
   }, [handleDragEnd]);
 
-  // -- Mouse handlers
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -177,8 +178,77 @@ export default function CentsJogWheel() {
     commitCents(0);
   }, [commitCents, stopInertia]);
 
+  const nudgeCents = useCallback(
+    (delta: number) => {
+      stopInertia();
+      const next = clampCents(currentCents + delta);
+      commitCents(next);
+      // Re-trigger note so user hears the new pitch
+      if (selectedKeyId !== null) {
+        stopNote(selectedKeyId);
+        // Small delay so the engine processes stop before play
+        setTimeout(() => playNote(selectedKeyId), 20);
+      }
+    },
+    [currentCents, commitCents, stopInertia, selectedKeyId, playNote, stopNote],
+  );
+
   const displayValue = isDragging ? localCents : currentCents;
   const sign = displayValue >= 0 ? '+' : '';
+  const isPlaying = tuningSimPhase === 'playing';
+
+  // Keyboard shortcuts: q/a = ±1¢, w/s = ±0.1¢, e/d = ±0.01¢
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (selectedKeyId === null) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+      switch (e.key.toLowerCase()) {
+        case 'q': nudgeCents(1); break;
+        case 'a': nudgeCents(-1); break;
+        case 'w': nudgeCents(0.1); break;
+        case 's': nudgeCents(-0.1); break;
+        case 'e': nudgeCents(0.01); break;
+        case 'd': nudgeCents(-0.01); break;
+        case 'r': handleReset(); break;
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [selectedKeyId, nudgeCents, handleReset]);
+
+  // Fine-adjust button row (shared between game and normal mode)
+  const FINE_STEPS = [
+    { label: '−5¢', delta: -5 },
+    { label: '−1¢', delta: -1 },
+    { label: '−0.1¢', delta: -0.1 },
+    { label: '+0.1¢', delta: 0.1 },
+    { label: '+1¢', delta: 1 },
+    { label: '+5¢', delta: 5 },
+  ] as const;
+
+  const btnStyle = {
+    background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 4,
+    color: 'var(--color-text)',
+    fontSize: 11,
+    padding: '3px 6px',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    whiteSpace: 'nowrap' as const,
+    flex: 1,
+    textAlign: 'center' as const,
+  };
+
+  const fineAdjustRow = (
+    <div style={{ display: 'flex', gap: 4, padding: '0 8px 6px' }}>
+      {FINE_STEPS.map(({ label, delta }) => (
+        <button key={label} onClick={() => nudgeCents(delta)} style={btnStyle}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 
   // Tick marks
   const ticks = [];
@@ -216,11 +286,64 @@ export default function CentsJogWheel() {
           fontSize: 14,
         }}
       >
-        Select a key to tune
+        Tap a key to select it
       </div>
     );
   }
 
+  // Game mode: NO feedback — just drag/buttons and a neutral label
+  if (isPlaying) {
+    return (
+      <div
+        style={{
+          position: 'relative',
+          minHeight: 80,
+          background: 'var(--color-surface)',
+          borderRadius: 8,
+          overflow: 'hidden',
+          touchAction: 'none',
+          userSelect: 'none',
+          cursor: isDragging ? 'grabbing' : 'grab',
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+      >
+        {/* Tick background */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          {ticks}
+        </div>
+
+        {/* Neutral display — no sharp/flat hint */}
+        <div
+          style={{
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+            minHeight: 80,
+            zIndex: 1,
+            padding: '8px 16px',
+          }}
+        >
+          <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text-dim)' }}>
+            Tune this note
+          </span>
+          <span style={{ fontSize: 10, color: 'var(--color-text-dim)', opacity: 0.4 }}>
+            ← swipe → or buttons below · use your ear!
+          </span>
+        </div>
+
+        {/* Fine-adjust buttons */}
+        {fineAdjustRow}
+      </div>
+    );
+  }
+
+  // Normal mode: exact cents display
   return (
     <div
       style={{
@@ -238,18 +361,12 @@ export default function CentsJogWheel() {
       onTouchEnd={onTouchEnd}
       onMouseDown={onMouseDown}
     >
-      {/* Ruler tick background */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-        }}
-      >
+      {/* Tick background */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
         {ticks}
       </div>
 
-      {/* Center display */}
+      {/* Cents readout */}
       <div
         style={{
           position: 'relative',
@@ -296,8 +413,11 @@ export default function CentsJogWheel() {
           zIndex: 2,
         }}
       >
-        Reset
+        Reset (R)
       </button>
+
+      {/* Fine-adjust buttons */}
+      {fineAdjustRow}
     </div>
   );
 }

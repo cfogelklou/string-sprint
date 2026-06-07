@@ -9,6 +9,7 @@ import CentsJogWheel from '@/components/CentsJogWheel';
 import ProfilePicker from '@/components/ProfilePicker';
 import BCurveEditor from '@/components/BCurveEditor';
 import TuningSimPanel from '@/components/TuningSimPanel';
+import TuningSimResultsPanel from '@/components/TuningSimResultsPanel';
 
 export default function App() {
   const isAudioInitialized = usePianoStore((s) => s.isAudioInitialized);
@@ -17,9 +18,12 @@ export default function App() {
   const masterVolume = usePianoStore((s) => s.masterVolume);
   const activeTones = usePianoStore((s) => s.activeTones);
   const isBCurveEditorOpen = usePianoStore((s) => s.isBCurveEditorOpen);
+  const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
   const resetTuning = usePianoStore((s) => s.resetTuning);
   const toggleBCurveEditor = usePianoStore((s) => s.toggleBCurveEditor);
   const setMasterVolume = usePianoStore((s) => s.setMasterVolume);
+
+  const isPlaying = tuningSimPhase === 'playing';
 
   // Sync activeTones → AudioEngine
   useEffect(() => {
@@ -52,28 +56,6 @@ export default function App() {
 
   return (
     <div id="fakepiano-app">
-      {/* Header */}
-      <header className="app-header">
-        <h1>Fake Piano</h1>
-        <div className="header-controls">
-          <ProfilePicker />
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
-            <span style={{ fontSize: 11, opacity: 0.7 }}>
-              Vol {Math.round(masterVolume * 100)}%
-            </span>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.01}
-              value={masterVolume}
-              onChange={(e) => setMasterVolume(Number(e.target.value))}
-              style={{ width: 80 }}
-            />
-          </label>
-        </div>
-      </header>
-
       {/* Status area */}
       <section className="status-area" data-testid="status-area">
         <NoteSelector />
@@ -84,35 +66,36 @@ export default function App() {
         <CentsJogWheel />
       </section>
 
-      {/* Controls bar */}
+      {/* Controls bar — title, profile, volume, action buttons */}
       <section className="controls-bar" data-testid="controls-bar">
-        <button
-          onClick={resetTuning}
-          style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 6,
-            color: 'var(--color-text)',
-            fontSize: 12,
-            padding: '5px 10px',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          Reset Tuning
-        </button>
+        <span className="controls-bar-title">Fake Piano</span>
+        <ProfilePicker />
+        <label className="controls-bar-volume">
+          <span style={{ fontSize: 11, opacity: 0.7 }}>
+            Vol {Math.round(masterVolume * 100)}%
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={masterVolume}
+            onChange={(e) => setMasterVolume(Number(e.target.value))}
+            style={{ width: 70 }}
+          />
+        </label>
+        <span style={{ flex: 1 }} />
+        {!isPlaying && (
+          <button
+            onClick={resetTuning}
+            className="controls-bar-btn"
+          >
+            Reset Tuning
+          </button>
+        )}
         <button
           onClick={toggleBCurveEditor}
-          style={{
-            background: isBCurveEditorOpen ? 'var(--color-primary)' : 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 6,
-            color: 'var(--color-text)',
-            fontSize: 12,
-            padding: '5px 10px',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
+          className={`controls-bar-btn${isBCurveEditorOpen ? ' active' : ''}`}
         >
           B Curve
         </button>
@@ -137,6 +120,9 @@ export default function App() {
 
       {/* B Curve editor overlay */}
       <BCurveEditor />
+
+      {/* Results reveal overlay */}
+      <TuningSimResultsPanel />
     </div>
   );
 }

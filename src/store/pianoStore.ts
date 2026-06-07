@@ -172,7 +172,7 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
   },
 
   playNote: (midi: number) => {
-    const { keys, numPartials, sustainDuration, activeTones } = get();
+    const { keys, numPartials, sustainDuration } = get();
     const keyIndex = midi - MIDI_A0;
     const key = keys[keyIndex];
     if (!key) return;
@@ -185,9 +185,8 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
       sustainDuration,
     };
 
-    const nextTones = new Map(activeTones);
-    nextTones.set(midi, tone);
-    set({ activeTones: nextTones });
+    // Monophonic: stop any existing tone, play only the new one
+    set({ activeTones: new Map([[midi, tone]]) });
   },
 
   stopNote: (midi: number) => {

@@ -16,6 +16,8 @@ export default function CentsJogWheel() {
   const keys = usePianoStore((s) => s.keys);
   const setCentsOffset = usePianoStore((s) => s.setCentsOffset);
   const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
+  const playNote = usePianoStore((s) => s.playNote);
+  const stopNote = usePianoStore((s) => s.stopNote);
 
   const keyIndex = selectedKeyId !== null ? selectedKeyId - MIDI_A0 : -1;
   const currentCents = keyIndex >= 0 && keyIndex < keys.length ? keys[keyIndex].centsOffset : 0;
@@ -181,8 +183,14 @@ export default function CentsJogWheel() {
       stopInertia();
       const next = clampCents(currentCents + delta);
       commitCents(next);
+      // Re-trigger note so user hears the new pitch
+      if (selectedKeyId !== null) {
+        stopNote(selectedKeyId);
+        // Small delay so the engine processes stop before play
+        setTimeout(() => playNote(selectedKeyId), 20);
+      }
     },
-    [currentCents, commitCents, stopInertia],
+    [currentCents, commitCents, stopInertia, selectedKeyId, playNote, stopNote],
   );
 
   const displayValue = isDragging ? localCents : currentCents;

@@ -60,7 +60,7 @@ const DEFAULT_STRETCH_STRATEGY: StretchStrategy = { kind: 'equal' };
 
 const DEFAULT_PIANO_STATE: PianoState = {
   isAudioInitialized: false,
-  masterVolume: 0.8,
+  masterVolume: 0.5,
   sustainDuration: 2.0,
   numPartials: AUDIO_CONFIG.MAX_PARTIALS,
   activeProfile: PIANO_PROFILE_NAMES.UPRIGHT,

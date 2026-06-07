@@ -15,6 +15,8 @@ export default function CentsJogWheel() {
   const selectedKeyId = usePianoStore((s) => s.selectedKeyId);
   const keys = usePianoStore((s) => s.keys);
   const setCentsOffset = usePianoStore((s) => s.setCentsOffset);
+  const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
+  const tuningSimTargets = usePianoStore((s) => s.tuningSimTargets);
 
   const keyIndex = selectedKeyId !== null ? selectedKeyId - MIDI_A0 : -1;
   const currentCents = keyIndex >= 0 && keyIndex < keys.length ? keys[keyIndex].centsOffset : 0;
@@ -179,6 +181,7 @@ export default function CentsJogWheel() {
 
   const displayValue = isDragging ? localCents : currentCents;
   const sign = displayValue >= 0 ? '+' : '';
+  const isPlaying = tuningSimPhase === 'playing';
 
   // Tick marks
   const ticks = [];
@@ -261,43 +264,78 @@ export default function CentsJogWheel() {
           zIndex: 1,
         }}
       >
-        <div
-          style={{
-            fontFeatureSettings: '"tnum"',
-            fontVariantNumeric: 'tabular-nums',
-            fontSize: 28,
-            fontWeight: 700,
-            color: Math.abs(displayValue) < 0.1 ? 'var(--color-accent)' : 'var(--color-text)',
-            letterSpacing: 1,
-            minWidth: 160,
-            textAlign: 'center',
-          }}
-        >
-          {sign}
-          {displayValue.toFixed(1)} cents
-        </div>
+        {isPlaying ? (
+          (() => {
+            const target = keyIndex >= 0 ? tuningSimTargets[keyIndex] : 0;
+            const distance = Math.abs(displayValue - target);
+            const fillRatio = Math.max(0, 1 - distance / 25);
+            const r = fillRatio < 0.5 ? 255 : Math.round(255 * (1 - (fillRatio - 0.5) * 2));
+            const g = fillRatio < 0.5 ? Math.round(170 * fillRatio * 2) : Math.round(170 + (230 - 170) * (fillRatio - 0.5) * 2);
+            const b = fillRatio >= 0.95 ? 118 : Math.round(68 * (1 - fillRatio));
+            const barColor = `rgb(${r},${g},${b})`;
+            return (
+              <div
+                style={{
+                  width: '80%',
+                  height: 12,
+                  borderRadius: 6,
+                  background: 'rgba(255,255,255,0.08)',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${fillRatio * 100}%`,
+                    height: '100%',
+                    borderRadius: 6,
+                    background: barColor,
+                    transition: 'width 0.1s ease-out, background 0.1s ease-out',
+                  }}
+                />
+              </div>
+            );
+          })()
+        ) : (
+          <div
+            style={{
+              fontFeatureSettings: '"tnum"',
+              fontVariantNumeric: 'tabular-nums',
+              fontSize: 28,
+              fontWeight: 700,
+              color: Math.abs(displayValue) < 0.1 ? 'var(--color-accent)' : 'var(--color-text)',
+              letterSpacing: 1,
+              minWidth: 160,
+              textAlign: 'center',
+            }}
+          >
+            {sign}
+            {displayValue.toFixed(1)} cents
+          </div>
+        )}
       </div>
 
-      {/* Reset button */}
-      <button
-        onClick={handleReset}
-        style={{
-          position: 'absolute',
-          right: 8,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: 6,
-          color: 'var(--color-text)',
-          fontSize: 12,
-          padding: '4px 10px',
-          cursor: 'pointer',
-          zIndex: 2,
-        }}
-      >
-        Reset
-      </button>
+      {/* Reset button - hidden during game play */}
+      {!isPlaying && (
+        <button
+          onClick={handleReset}
+          style={{
+            position: 'absolute',
+            right: 8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 6,
+            color: 'var(--color-text)',
+            fontSize: 12,
+            padding: '4px 10px',
+            cursor: 'pointer',
+            zIndex: 2,
+          }}
+        >
+          Reset
+        </button>
+      )}
     </div>
   );
 }

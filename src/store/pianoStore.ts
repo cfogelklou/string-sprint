@@ -4,14 +4,19 @@ import {
   ToneConfig,
   PianoProfileName,
   RigaudParams,
+  TuningSimPhase,
+  StretchStrategy,
+  TuningSimResults,
   AUDIO_CONFIG,
   PIANO_PROFILE_NAMES,
   MIDI_A0,
   NUM_KEYS,
+  TUNING_SIM_CENTS_RANGE,
 } from '@/types';
 import { PIANO_B_PROFILES } from '@/bCoefficients/profiles';
 import { generateProfile, DEFAULT_RIGAUD_PARAMS } from '@/bCoefficients/rigaud';
 import { generate88Keys, midiToFreq } from '@/model/pianoNotes';
+import { computeTargets, computeResults } from '@/tuning/stretchTargets';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -38,8 +43,12 @@ interface PianoState {
   // Active tones
   activeTones: Map<number, ToneConfig>;
 
-  // Tuning simulation
-  tuningSimMode: boolean;
+  // Tuning simulation — game phase
+  tuningSimPhase: TuningSimPhase;
+  tuningSimStretch: StretchStrategy;
+  tuningSimTargets: number[];
+  tuningSimUserCommits: Map<number, number>;
+  tuningSimResults: TuningSimResults | null;
   tuningSimTargetMidi: number | null;
   tuningSimCompleted: Set<number>;
 
@@ -47,7 +56,7 @@ interface PianoState {
   isBCurveEditorOpen: boolean;
 }
 
-const TUNING_SIM_CENTS_RANGE = 50;
+const DEFAULT_STRETCH_STRATEGY: StretchStrategy = { kind: 'equal' };
 
 const DEFAULT_PIANO_STATE: PianoState = {
   isAudioInitialized: false,
@@ -60,7 +69,11 @@ const DEFAULT_PIANO_STATE: PianoState = {
   keys: generate88Keys(PIANO_B_PROFILES[PIANO_PROFILE_NAMES.UPRIGHT]),
   selectedKeyId: null,
   activeTones: new Map(),
-  tuningSimMode: false,
+  tuningSimPhase: 'idle',
+  tuningSimStretch: DEFAULT_STRETCH_STRATEGY,
+  tuningSimTargets: new Array(NUM_KEYS).fill(0),
+  tuningSimUserCommits: new Map(),
+  tuningSimResults: null,
   tuningSimTargetMidi: null,
   tuningSimCompleted: new Set(),
   isBCurveEditorOpen: false,
@@ -83,10 +96,14 @@ interface PianoActions {
   setCustomParam: (key: keyof RigaudParams, value: number) => void;
   setUseCustomProfile: (use: boolean) => void;
   toggleBCurveEditor: () => void;
-  enableTuningSim: () => void;
-  disableTuningSim: () => void;
-  resetTuning: () => void;
+  startTuningSim: (stretch: StretchStrategy) => void;
+  stopTuningSim: () => void;
+  commitNote: (midi: number) => void;
+  revealResults: () => void;
+  backToPlaying: () => void;
+  randomizeUncommitted: () => void;
   setTuningSimTarget: (midi: number) => void;
+  resetTuning: () => void;
 }
 
 type PianoStore = PianoState & PianoActions;
@@ -108,6 +125,16 @@ function regenerateKeys(
     ...k,
     centsOffset: offsets.get(k.midiNote) ?? 0,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Helper: current B profile (preset or custom)
+// ---------------------------------------------------------------------------
+
+function currentBProfile(state: PianoState): number[] {
+  return state.useCustomProfile
+    ? generateProfile(state.customParams)
+    : PIANO_B_PROFILES[state.activeProfile];
 }
 
 // ---------------------------------------------------------------------------
@@ -228,38 +255,95 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
     set((s) => ({ isBCurveEditorOpen: !s.isBCurveEditorOpen }));
   },
 
-  enableTuningSim: () => {
+  // ---------------------------------------------------------------------------
+  // Tuning simulation game actions
+  // ---------------------------------------------------------------------------
+
+  startTuningSim: (stretch: StretchStrategy) => {
     const { keys } = get();
+    const bProfile = currentBProfile(get());
+    const targets = computeTargets(stretch, bProfile);
     const nextKeys = keys.map((k) => ({
       ...k,
       centsOffset: (Math.random() * 2 - 1) * TUNING_SIM_CENTS_RANGE,
     }));
     set({
-      tuningSimMode: true,
-      keys: nextKeys,
+      tuningSimPhase: 'playing',
+      tuningSimStretch: stretch,
+      tuningSimTargets: targets,
+      tuningSimUserCommits: new Map(),
+      tuningSimResults: null,
       tuningSimCompleted: new Set(),
       tuningSimTargetMidi: null,
+      keys: nextKeys,
     });
   },
 
-  disableTuningSim: () => {
+  stopTuningSim: () => {
     const { keys } = get();
     const nextKeys = keys.map((k) => ({ ...k, centsOffset: 0 }));
     set({
-      tuningSimMode: false,
-      keys: nextKeys,
+      tuningSimPhase: 'idle',
+      tuningSimTargets: new Array(NUM_KEYS).fill(0),
+      tuningSimUserCommits: new Map(),
+      tuningSimResults: null,
       tuningSimCompleted: new Set(),
       tuningSimTargetMidi: null,
+      keys: nextKeys,
     });
+  },
+
+  commitNote: (midi: number) => {
+    const { keys, tuningSimCompleted, tuningSimUserCommits } = get();
+    const keyIndex = midi - MIDI_A0;
+    if (keyIndex < 0 || keyIndex >= NUM_KEYS) return;
+
+    const centsOffset = keys[keyIndex].centsOffset;
+    const nextCommits = new Map(tuningSimUserCommits);
+    nextCommits.set(midi, centsOffset);
+    const nextCompleted = new Set(tuningSimCompleted);
+    nextCompleted.add(midi);
+    set({
+      tuningSimUserCommits: nextCommits,
+      tuningSimCompleted: nextCompleted,
+    });
+  },
+
+  revealResults: () => {
+    const { tuningSimUserCommits, tuningSimTargets } = get();
+    const results = computeResults(tuningSimUserCommits, tuningSimTargets);
+    set({
+      tuningSimResults: results,
+      tuningSimPhase: 'revealed',
+    });
+  },
+
+  backToPlaying: () => {
+    set({
+      tuningSimPhase: 'playing',
+      tuningSimResults: null,
+    });
+  },
+
+  randomizeUncommitted: () => {
+    const { keys, tuningSimCompleted } = get();
+    const nextKeys = keys.map((k) => {
+      if (tuningSimCompleted.has(k.midiNote)) return k;
+      return {
+        ...k,
+        centsOffset: (Math.random() * 2 - 1) * TUNING_SIM_CENTS_RANGE,
+      };
+    });
+    set({ keys: nextKeys });
+  },
+
+  setTuningSimTarget: (midi: number) => {
+    set({ tuningSimTargetMidi: midi });
   },
 
   resetTuning: () => {
     const { keys } = get();
     const nextKeys = keys.map((k) => ({ ...k, centsOffset: 0 }));
     set({ keys: nextKeys });
-  },
-
-  setTuningSimTarget: (midi: number) => {
-    set({ tuningSimTargetMidi: midi });
   },
 }));

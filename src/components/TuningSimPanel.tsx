@@ -1,33 +1,56 @@
+import { useState } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
-import { NUM_KEYS } from '@/types';
+import { StretchStrategy } from '@/types';
+import TuningSimGameBar from '@/components/TuningSimGameBar';
+
+const STRETCH_OPTIONS: { label: string; value: StretchStrategy }[] = [
+  { label: 'Equal Temperament', value: { kind: 'equal' } },
+  { label: 'Railsback Stretch', value: { kind: 'railsback' } },
+  { label: 'Partial 2 Align', value: { kind: 'partial_align', partial: 2 } },
+  { label: 'Partial 3 Align', value: { kind: 'partial_align', partial: 3 } },
+  { label: 'Partial 4 Align', value: { kind: 'partial_align', partial: 4 } },
+];
 
 export default function TuningSimPanel() {
-  const tuningSimMode = usePianoStore((s) => s.tuningSimMode);
-  const keys = usePianoStore((s) => s.keys);
-  const enableTuningSim = usePianoStore((s) => s.enableTuningSim);
-  const disableTuningSim = usePianoStore((s) => s.disableTuningSim);
-  const resetTuning = usePianoStore((s) => s.resetTuning);
+  const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
+  const startTuningSim = usePianoStore((s) => s.startTuningSim);
+  const [selectedIdx, setSelectedIdx] = useState(0);
 
-  const tunedCount = keys.filter((k) => Math.abs(k.centsOffset) < 0.5).length;
-  const allTuned = tunedCount === NUM_KEYS;
+  if (tuningSimPhase !== 'idle') {
+    return <TuningSimGameBar />;
+  }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '6px 10px',
-        background: 'var(--color-surface)',
-        borderRadius: 8,
-        flexWrap: 'wrap',
-      }}
-    >
-      {/* Enable/Disable */}
-      <button
-        onClick={tuningSimMode ? disableTuningSim : enableTuningSim}
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      padding: '6px 10px',
+      background: 'var(--color-surface)',
+      borderRadius: 8,
+      flexWrap: 'wrap',
+    }}>
+      <select
+        value={selectedIdx}
+        onChange={(e) => setSelectedIdx(Number(e.target.value))}
         style={{
-          background: tuningSimMode ? 'var(--color-destructive)' : 'var(--color-primary)',
+          background: 'rgba(0,0,0,0.3)',
+          color: 'var(--color-text)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 6,
+          padding: '5px 8px',
+          fontSize: 12,
+          fontFamily: 'inherit',
+        }}
+      >
+        {STRETCH_OPTIONS.map((opt, i) => (
+          <option key={i} value={i}>{opt.label}</option>
+        ))}
+      </select>
+      <button
+        onClick={() => startTuningSim(STRETCH_OPTIONS[selectedIdx].value)}
+        style={{
+          background: 'var(--color-primary)',
           border: 'none',
           borderRadius: 6,
           color: '#fff',
@@ -39,60 +62,8 @@ export default function TuningSimPanel() {
           whiteSpace: 'nowrap',
         }}
       >
-        {tuningSimMode ? 'Stop Sim' : 'Tuning Sim'}
+        Tuning Sim
       </button>
-
-      {tuningSimMode && (
-        <>
-          {/* Randomize */}
-          <button
-            onClick={enableTuningSim}
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 6,
-              color: 'var(--color-text)',
-              fontSize: 12,
-              padding: '5px 10px',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Randomize
-          </button>
-
-          {/* Reset */}
-          <button
-            onClick={resetTuning}
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 6,
-              color: 'var(--color-text)',
-              fontSize: 12,
-              padding: '5px 10px',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Reset
-          </button>
-
-          {/* Progress */}
-          <span
-            style={{
-              fontSize: 12,
-              color: allTuned ? 'var(--color-accent)' : 'var(--color-text-dim)',
-              fontWeight: allTuned ? 700 : 400,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {tunedCount}/{NUM_KEYS} tuned
-          </span>
-        </>
-      )}
     </div>
   );
 }

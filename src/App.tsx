@@ -9,6 +9,7 @@ import CentsJogWheel from '@/components/CentsJogWheel';
 import ProfilePicker from '@/components/ProfilePicker';
 import BCurveEditor from '@/components/BCurveEditor';
 import TuningSimPanel from '@/components/TuningSimPanel';
+import TuningSimResultsPanel from '@/components/TuningSimResultsPanel';
 
 export default function App() {
   const isAudioInitialized = usePianoStore((s) => s.isAudioInitialized);
@@ -17,9 +18,12 @@ export default function App() {
   const masterVolume = usePianoStore((s) => s.masterVolume);
   const activeTones = usePianoStore((s) => s.activeTones);
   const isBCurveEditorOpen = usePianoStore((s) => s.isBCurveEditorOpen);
+  const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
   const resetTuning = usePianoStore((s) => s.resetTuning);
   const toggleBCurveEditor = usePianoStore((s) => s.toggleBCurveEditor);
   const setMasterVolume = usePianoStore((s) => s.setMasterVolume);
+
+  const isPlaying = tuningSimPhase === 'playing';
 
   // Sync activeTones → AudioEngine
   useEffect(() => {
@@ -84,23 +88,25 @@ export default function App() {
         <CentsJogWheel />
       </section>
 
-      {/* Controls bar */}
+      {/* Controls bar — hide Reset during game */}
       <section className="controls-bar" data-testid="controls-bar">
-        <button
-          onClick={resetTuning}
-          style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 6,
-            color: 'var(--color-text)',
-            fontSize: 12,
-            padding: '5px 10px',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          Reset Tuning
-        </button>
+        {!isPlaying && (
+          <button
+            onClick={resetTuning}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 6,
+              color: 'var(--color-text)',
+              fontSize: 12,
+              padding: '5px 10px',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            Reset Tuning
+          </button>
+        )}
         <button
           onClick={toggleBCurveEditor}
           style={{
@@ -137,6 +143,9 @@ export default function App() {
 
       {/* B Curve editor overlay */}
       <BCurveEditor />
+
+      {/* Results reveal overlay */}
+      <TuningSimResultsPanel />
     </div>
   );
 }

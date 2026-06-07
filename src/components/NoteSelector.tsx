@@ -9,6 +9,7 @@ export default function NoteSelector() {
   const masterVolume = usePianoStore((s) => s.masterVolume);
   const setNumPartials = usePianoStore((s) => s.setNumPartials);
   const setMasterVolume = usePianoStore((s) => s.setMasterVolume);
+  const activeTones = usePianoStore((s) => s.activeTones);
 
   const selectedKey = selectedKeyId !== null
     ? keys[selectedKeyId - MIDI_A0]
@@ -19,6 +20,7 @@ export default function NoteSelector() {
     ? midiToFreq(selectedKey.midiNote).toFixed(2)
     : '--';
   const bValue = selectedKey ? selectedKey.B.toFixed(6) : '--';
+  const isToneActive = selectedKeyId !== null && activeTones.has(selectedKeyId);
 
   return (
     <div
@@ -38,9 +40,20 @@ export default function NoteSelector() {
         <span style={{ fontSize: 14, opacity: 0.7 }}>{frequency} Hz</span>
       </div>
 
-      {/* B value */}
-      <div style={{ fontSize: 12, opacity: 0.6 }}>
-        B: {bValue}
+      {/* B value / PTA indicator */}
+      <div style={{
+        fontSize: 12,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '2px 8px',
+        borderRadius: 4,
+        background: isToneActive ? 'rgba(0, 230, 118, 0.15)' : 'transparent',
+        color: isToneActive ? 'var(--color-accent)' : 'var(--color-text-dim)',
+        fontWeight: isToneActive ? 700 : 400,
+        border: isToneActive ? '1px solid rgba(0, 230, 118, 0.3)' : '1px solid transparent',
+      }}>
+        {isToneActive ? 'PTA' : 'B'}: {bValue}
       </div>
 
       {/* Partials */}

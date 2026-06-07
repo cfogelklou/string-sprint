@@ -10,6 +10,10 @@ interface KeyboardMinimapProps {
 export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) {
   const selectedKeyId = usePianoStore((s) => s.selectedKeyId);
   const activeTones = usePianoStore((s) => s.activeTones);
+  const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
+  const tuningSimCompleted = usePianoStore((s) => s.tuningSimCompleted);
+
+  const isPlaying = tuningSimPhase === 'playing';
 
   const handleClick = useCallback(
     (midi: number) => () => {
@@ -51,6 +55,7 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
       {Array.from(whiteIndices.entries()).map(([midi, idx]) => {
         const isActive = activeTones.has(midi);
         const isSelected = selectedKeyId === midi;
+        const isCommitted = isPlaying && tuningSimCompleted.has(midi);
 
         return (
           <div
@@ -63,9 +68,11 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
               height: '100%',
               background: isSelected
                 ? 'var(--color-accent, #4a9eff)'
-                : isActive
-                  ? 'rgba(74, 158, 255, 0.5)'
-                  : '#f5f5f5',
+                : isCommitted
+                  ? 'rgba(0, 230, 118, 0.5)'
+                  : isActive
+                    ? 'rgba(74, 158, 255, 0.5)'
+                    : '#f5f5f5',
               boxSizing: 'border-box',
             }}
             onClick={handleClick(midi)}
@@ -88,6 +95,7 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
         return blacks.map(({ midi, x }) => {
           const isActive = activeTones.has(midi);
           const isSelected = selectedKeyId === midi;
+          const isCommitted = isPlaying && tuningSimCompleted.has(midi);
 
           return (
             <div
@@ -100,9 +108,11 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
                 height: '60%',
                 background: isSelected
                   ? 'var(--color-accent, #4a9eff)'
-                  : isActive
-                    ? 'rgba(74, 158, 255, 0.7)'
-                    : '#1a1a2e',
+                  : isCommitted
+                    ? 'rgba(0, 230, 118, 0.5)'
+                    : isActive
+                      ? 'rgba(74, 158, 255, 0.7)'
+                      : '#1a1a2e',
                 zIndex: 2,
                 borderRadius: '0 0 1px 1px',
               }}

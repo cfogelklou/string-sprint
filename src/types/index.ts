@@ -75,3 +75,41 @@ export interface RigaudParams {
   s_T: number;
   y_T: number;
 }
+
+// ---------------------------------------------------------------------------
+// Tuning simulation game
+// ---------------------------------------------------------------------------
+
+export type TuningSimPhase = 'idle' | 'playing' | 'revealed';
+
+export type StretchStrategy =
+  | { kind: 'equal' }
+  | { kind: 'railsback' }
+  | { kind: 'partial_align'; partial: number };
+
+export interface TuningSimNoteResult {
+  midiNote: number;
+  userCents: number;
+  targetCents: number;
+  error: number;
+}
+
+export interface TuningSimResults {
+  notes: TuningSimNoteResult[];
+  meanAbsoluteError: number;
+  standardDeviation: number;
+  withinHalfCent: number;
+  withinOneCent: number;
+  withinTwoCents: number;
+  grade: string;
+}
+
+export const GRADE_THRESHOLDS = {
+  A_PLUS: 0.2,
+  A: 0.5,
+  B: 1.0,
+  C: 2.0,
+  D: 3.5,
+} as const;
+
+export const TUNING_SIM_CENTS_RANGE = 50;

@@ -177,9 +177,71 @@ export default function CentsJogWheel() {
     commitCents(0);
   }, [commitCents, stopInertia]);
 
+  const nudgeCents = useCallback(
+    (delta: number) => {
+      stopInertia();
+      const next = clampCents(currentCents + delta);
+      commitCents(next);
+    },
+    [currentCents, commitCents, stopInertia],
+  );
+
   const displayValue = isDragging ? localCents : currentCents;
   const sign = displayValue >= 0 ? '+' : '';
   const isPlaying = tuningSimPhase === 'playing';
+
+  // Keyboard shortcuts: q/a = ±1¢, w/s = ±0.1¢, e/d = ±0.01¢
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (selectedKeyId === null) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+      switch (e.key.toLowerCase()) {
+        case 'q': nudgeCents(1); break;
+        case 'a': nudgeCents(-1); break;
+        case 'w': nudgeCents(0.1); break;
+        case 's': nudgeCents(-0.1); break;
+        case 'e': nudgeCents(0.01); break;
+        case 'd': nudgeCents(-0.01); break;
+        case 'r': handleReset(); break;
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [selectedKeyId, nudgeCents, handleReset]);
+
+  // Fine-adjust button row (shared between game and normal mode)
+  const FINE_STEPS = [
+    { label: '−1¢', delta: -1 },
+    { label: '−0.1¢', delta: -0.1 },
+    { label: '−0.01¢', delta: -0.01 },
+    { label: '+0.01¢', delta: 0.01 },
+    { label: '+0.1¢', delta: 0.1 },
+    { label: '+1¢', delta: 1 },
+  ] as const;
+
+  const btnStyle = {
+    background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 4,
+    color: 'var(--color-text)',
+    fontSize: 11,
+    padding: '3px 6px',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    whiteSpace: 'nowrap' as const,
+    flex: 1,
+    textAlign: 'center' as const,
+  };
+
+  const fineAdjustRow = (
+    <div style={{ display: 'flex', gap: 4, padding: '0 8px 6px' }}>
+      {FINE_STEPS.map(({ label, delta }) => (
+        <button key={label} onClick={() => nudgeCents(delta)} style={btnStyle}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 
   // Tick marks
   const ticks = [];
@@ -309,9 +371,12 @@ export default function CentsJogWheel() {
 
           {/* Drag hint */}
           <span style={{ fontSize: 10, color: 'var(--color-text-dim)', opacity: 0.4 }}>
-            ← swipe to tune →
+            ← swipe to tune → or use buttons below
           </span>
         </div>
+
+        {/* Fine-adjust buttons */}
+        {fineAdjustRow}
       </div>
     );
   }
@@ -386,8 +451,11 @@ export default function CentsJogWheel() {
           zIndex: 2,
         }}
       >
-        Reset
+        Reset (R)
       </button>
+
+      {/* Fine-adjust buttons */}
+      {fineAdjustRow}
     </div>
   );
 }

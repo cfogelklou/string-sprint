@@ -108,7 +108,7 @@ export default function CentsJogWheel() {
       const now = performance.now();
       const dt = now - d.lastTime;
       if (dt > 0) {
-        d.velocity = ((clientX - d.lastX) / dt) * 16; // scale to ~1 frame
+        d.velocity = ((clientX - d.lastX) / dt) * 16;
       }
       d.lastX = clientX;
       d.lastTime = now;
@@ -135,7 +135,6 @@ export default function CentsJogWheel() {
     return () => stopInertia();
   }, [stopInertia]);
 
-  // -- Touch handlers
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
       e.preventDefault();
@@ -156,7 +155,6 @@ export default function CentsJogWheel() {
     handleDragEnd();
   }, [handleDragEnd]);
 
-  // -- Mouse handlers
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -219,11 +217,106 @@ export default function CentsJogWheel() {
           fontSize: 14,
         }}
       >
-        Select a key to tune
+        Tap a key to select it
       </div>
     );
   }
 
+  // Game mode: show direction label + proximity bar, no exact cents
+  if (isPlaying) {
+    const target = keyIndex >= 0 ? tuningSimTargets[keyIndex] : 0;
+    const distance = displayValue - target;
+    const absDistance = Math.abs(distance);
+    const fillRatio = Math.max(0, 1 - absDistance / 25);
+
+    // Color: red → yellow → green
+    const r = fillRatio < 0.5 ? 255 : Math.round(255 * (1 - (fillRatio - 0.5) * 2));
+    const g = fillRatio < 0.5 ? Math.round(170 * fillRatio * 2) : Math.round(170 + (230 - 170) * (fillRatio - 0.5) * 2);
+    const b = fillRatio >= 0.95 ? 118 : Math.round(68 * (1 - fillRatio));
+    const barColor = `rgb(${r},${g},${b})`;
+
+    const direction = distance > 0.5 ? '♯ Sharp' : distance < -0.5 ? '♭ Flat' : '✓ In Tune';
+
+    return (
+      <div
+        style={{
+          position: 'relative',
+          minHeight: 96,
+          background: 'var(--color-surface)',
+          borderRadius: 8,
+          overflow: 'hidden',
+          touchAction: 'none',
+          userSelect: 'none',
+          cursor: isDragging ? 'grabbing' : 'grab',
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+      >
+        {/* Tick background */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          {ticks}
+        </div>
+
+        {/* Tuning control display */}
+        <div
+          style={{
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            minHeight: 96,
+            zIndex: 1,
+            padding: '8px 16px',
+          }}
+        >
+          {/* Direction label */}
+          <span
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              color: barColor,
+              letterSpacing: 1,
+            }}
+          >
+            {direction}
+          </span>
+
+          {/* Proximity bar */}
+          <div
+            style={{
+              width: '85%',
+              height: 16,
+              borderRadius: 8,
+              background: 'rgba(255,255,255,0.08)',
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <div
+              style={{
+                width: `${fillRatio * 100}%`,
+                height: '100%',
+                borderRadius: 8,
+                background: barColor,
+                transition: 'width 0.1s ease-out, background 0.1s ease-out',
+              }}
+            />
+          </div>
+
+          {/* Drag hint */}
+          <span style={{ fontSize: 10, color: 'var(--color-text-dim)', opacity: 0.4 }}>
+            ← swipe to tune →
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Normal mode: exact cents display
   return (
     <div
       style={{
@@ -241,18 +334,12 @@ export default function CentsJogWheel() {
       onTouchEnd={onTouchEnd}
       onMouseDown={onMouseDown}
     >
-      {/* Ruler tick background */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-        }}
-      >
+      {/* Tick background */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
         {ticks}
       </div>
 
-      {/* Center display */}
+      {/* Cents readout */}
       <div
         style={{
           position: 'relative',
@@ -264,78 +351,43 @@ export default function CentsJogWheel() {
           zIndex: 1,
         }}
       >
-        {isPlaying ? (
-          (() => {
-            const target = keyIndex >= 0 ? tuningSimTargets[keyIndex] : 0;
-            const distance = Math.abs(displayValue - target);
-            const fillRatio = Math.max(0, 1 - distance / 25);
-            const r = fillRatio < 0.5 ? 255 : Math.round(255 * (1 - (fillRatio - 0.5) * 2));
-            const g = fillRatio < 0.5 ? Math.round(170 * fillRatio * 2) : Math.round(170 + (230 - 170) * (fillRatio - 0.5) * 2);
-            const b = fillRatio >= 0.95 ? 118 : Math.round(68 * (1 - fillRatio));
-            const barColor = `rgb(${r},${g},${b})`;
-            return (
-              <div
-                style={{
-                  width: '80%',
-                  height: 12,
-                  borderRadius: 6,
-                  background: 'rgba(255,255,255,0.08)',
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    width: `${fillRatio * 100}%`,
-                    height: '100%',
-                    borderRadius: 6,
-                    background: barColor,
-                    transition: 'width 0.1s ease-out, background 0.1s ease-out',
-                  }}
-                />
-              </div>
-            );
-          })()
-        ) : (
-          <div
-            style={{
-              fontFeatureSettings: '"tnum"',
-              fontVariantNumeric: 'tabular-nums',
-              fontSize: 28,
-              fontWeight: 700,
-              color: Math.abs(displayValue) < 0.1 ? 'var(--color-accent)' : 'var(--color-text)',
-              letterSpacing: 1,
-              minWidth: 160,
-              textAlign: 'center',
-            }}
-          >
-            {sign}
-            {displayValue.toFixed(1)} cents
-          </div>
-        )}
-      </div>
-
-      {/* Reset button - hidden during game play */}
-      {!isPlaying && (
-        <button
-          onClick={handleReset}
+        <div
           style={{
-            position: 'absolute',
-            right: 8,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 6,
-            color: 'var(--color-text)',
-            fontSize: 12,
-            padding: '4px 10px',
-            cursor: 'pointer',
-            zIndex: 2,
+            fontFeatureSettings: '"tnum"',
+            fontVariantNumeric: 'tabular-nums',
+            fontSize: 28,
+            fontWeight: 700,
+            color: Math.abs(displayValue) < 0.1 ? 'var(--color-accent)' : 'var(--color-text)',
+            letterSpacing: 1,
+            minWidth: 160,
+            textAlign: 'center',
           }}
         >
-          Reset
-        </button>
-      )}
+          {sign}
+          {displayValue.toFixed(1)} cents
+        </div>
+      </div>
+
+      {/* Reset button */}
+      <button
+        onClick={handleReset}
+        style={{
+          position: 'absolute',
+          right: 8,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          background: 'rgba(255,255,255,0.08)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 6,
+          color: 'var(--color-text)',
+          fontSize: 12,
+          padding: '4px 10px',
+          cursor: 'pointer',
+          zIndex: 2,
+        }}
+      >
+        Reset
+      </button>
     </div>
   );
 }

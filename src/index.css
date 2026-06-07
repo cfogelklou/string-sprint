@@ -33,7 +33,7 @@ html, body, #root {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: auto auto 1fr auto auto auto;
+  grid-template-rows: auto auto auto auto auto auto 1fr;
   grid-template-columns: 1fr;
   overflow: hidden;
 }
@@ -92,7 +92,7 @@ html, body, #root {
 }
 
 .tuning-sim-area {
-  display: none; /* hidden by default, shown when sim mode active */
+  display: flex;
   padding: 4px;
   background-color: var(--color-surface);
 }

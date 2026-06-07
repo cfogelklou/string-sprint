@@ -14,7 +14,7 @@ on:
 
   push:
     branches:
-      - master
+      - main
       - devel
       - gamify
     tags:
@@ -54,10 +54,10 @@ jobs:
         run: bun run build
 
       - name: Test
-        run: bun run test || true
+        run: bun run test
 
       - name: Deploy via SFTP
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/gamify')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/gamify')
         run: |
           echo "$ID_RSA_PRIV" > id_rsa_sftp
           chmod 600 id_rsa_sftp

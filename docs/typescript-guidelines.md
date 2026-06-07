@@ -20,9 +20,10 @@ backgroundColor: '#FF0000'
 
 **Good Practice:**
 ```typescript
-//  GOOD: Centralized Enum/Constant
-import { TuningSimPhase } from '@/types';
-if (tuningSimPhase === TuningSimPhase.PLAYING) { ... }
+//  GOOD: Type-annotated variable + string literal
+import type { TuningSimPhase } from '@/types';
+const phase: TuningSimPhase = 'playing';
+if (phase === 'playing') { ... }
 
 //  GOOD: Named Constant
 import { DEFAULT_A4 } from '@/types';

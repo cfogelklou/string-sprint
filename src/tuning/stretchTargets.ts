@@ -59,7 +59,7 @@ export function computeTargets(
       for (let i = 0; i < NUM_KEYS; i++) {
         const midi = MIDI_A0 + i;
         const nextOctave = midi + 12;
-        if (nextOctave > 108) {
+        if (nextOctave > MIDI_A0 + NUM_KEYS - 1) {
           // No note an octave above C8 — fall back to 0
           targets.push(0);
           continue;

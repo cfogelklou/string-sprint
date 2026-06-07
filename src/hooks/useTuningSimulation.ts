@@ -1,4 +1,5 @@
 import { usePianoStore } from '@/store/pianoStore';
+import { NUM_KEYS } from '@/types';
 
 export function useTuningSimulation() {
   const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
@@ -15,7 +16,7 @@ export function useTuningSimulation() {
     isRevealed: tuningSimPhase === 'revealed',
     stretch: tuningSimStretch,
     committedCount: tuningSimCompleted.size,
-    totalKeys: 88,
+    totalKeys: NUM_KEYS,
     results: tuningSimResults,
     targetMidi: tuningSimTargetMidi,
     userCommits: tuningSimUserCommits,

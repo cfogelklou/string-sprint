@@ -1,0 +1,2 @@
+-mkdir /customers/4/7/b/cfg90a6nm/webroots/www/fakepiano
+put -R dist/* /customers/4/7/b/cfg90a6nm/webroots/www/fakepiano/

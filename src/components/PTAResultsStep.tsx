@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { usePTAStore } from '@/store/ptaStore';
 
 function gradeColor(grade: string): string {
@@ -79,15 +80,15 @@ export default function PTAResultsStep() {
             <span style={{ color: 'var(--color-text-dim)' }}>Error</span>
             <span style={{ color: 'var(--color-text-dim)' }}>Status</span>
             {captured.map((s) => (
-              <>
-                <span key={`n${s.midi}`} style={{ fontWeight: 600 }}>{s.noteName}</span>
-                <span key={`e${s.midi}`} style={{ fontVariantNumeric: 'tabular-nums' }}>
+              <Fragment key={s.midi}>
+                <span style={{ fontWeight: 600 }}>{s.noteName}</span>
+                <span style={{ fontVariantNumeric: 'tabular-nums' }}>
                   {s.relativeErrorPct!.toFixed(1)}%
                 </span>
-                <span key={`s${s.midi}`} style={{ color: s.relativeErrorPct! < 5 ? '#00e676' : s.relativeErrorPct! < 10 ? '#ffaa00' : '#ff4444' }}>
+                <span style={{ color: s.relativeErrorPct! < 5 ? '#00e676' : s.relativeErrorPct! < 10 ? '#ffaa00' : '#ff4444' }}>
                   {s.relativeErrorPct! < 5 ? '✓' : s.relativeErrorPct! < 10 ? '≈' : '✗'}
                 </span>
-              </>
+              </Fragment>
             ))}
           </div>
         </div>

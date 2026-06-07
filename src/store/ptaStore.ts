@@ -102,6 +102,9 @@ export const usePTAStore = create<PTAStore>()((set, get) => ({
     if (pianoState.tuningSimPhase !== 'idle') {
       pianoState.stopTuningSim();
     }
+    // Force preset mode and sync profile to DEFAULT_PTA_TYPE
+    pianoState.setUseCustomProfile(false);
+    pianoState.setProfile(DEFAULT_PTA_TYPE);
     set({ ptaActive: true, ptaState: defaultWizardState() });
   },
 
@@ -112,7 +115,10 @@ export const usePTAStore = create<PTAStore>()((set, get) => ({
 
   ptaSetPianoType: (type: PianoProfileName) => {
     const { ptaState } = get();
-    usePianoStore.getState().setProfile(type);
+    const pianoStore = usePianoStore.getState();
+    // Force preset mode so PTA uses PIANO_B_PROFILES (not custom Rigaud)
+    pianoStore.setUseCustomProfile(false);
+    pianoStore.setProfile(type);
     set({
       ptaState: {
         ...ptaState,

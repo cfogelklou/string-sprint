@@ -115,11 +115,11 @@ export function calculateRailsbackOffset(
   fStretched[INDEX_A4] = referenceFreq;
   centsOffset[INDEX_A4] = 0;
 
-  const span = 12; // Always octave-based propagation
-
   // Propagate upward (toward treble) semitone by semitone
   for (let i = INDEX_A4 + 1; i < NUM_KEYS; i++) {
-    const anchorIdx = i - span;
+    const alignment = getAlignment(i, octaveStyle);
+    const spanForStyle = alignment.semitoneSpan;
+    const anchorIdx = i - spanForStyle;
     if (anchorIdx < 0 || fStretched[anchorIdx] === 0) {
       fStretched[i] = midiToFreq(MIDI_A0 + i, referenceFreq);
       centsOffset[i] = 0;
@@ -129,7 +129,6 @@ export function calculateRailsbackOffset(
     const lowerFreq = fStretched[anchorIdx];
     const bLower = bValues[anchorIdx];
     const bUpper = bValues[i];
-    const alignment = getAlignment(i, octaveStyle);
 
     const fTarget = computeTargetFrequency(
       lowerFreq,
@@ -144,7 +143,9 @@ export function calculateRailsbackOffset(
 
   // Propagate downward (toward bass) semitone by semitone
   for (let i = INDEX_A4 - 1; i >= 0; i--) {
-    const anchorIdx = i + span;
+    const alignment = getAlignment(i, octaveStyle);
+    const spanForStyle = alignment.semitoneSpan;
+    const anchorIdx = i + spanForStyle;
     if (anchorIdx >= NUM_KEYS || fStretched[anchorIdx] === 0) {
       fStretched[i] = midiToFreq(MIDI_A0 + i, referenceFreq);
       centsOffset[i] = 0;
@@ -154,7 +155,6 @@ export function calculateRailsbackOffset(
     const upperFreq = fStretched[anchorIdx];
     const bLower = bValues[i];
     const bUpper = bValues[anchorIdx];
-    const alignment = getAlignment(i, octaveStyle);
 
     const fTarget = solveForLowerFrequency(
       upperFreq,

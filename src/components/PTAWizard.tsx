@@ -6,7 +6,7 @@ import PTAMeasureStep from './PTAMeasureStep';
 import PTAReviewStep from './PTAReviewStep';
 import PTAResultsStep from './PTAResultsStep';
 
-const STEPS = ['setup', 'bridge-break', 'measure', 'review'] as const;
+const STEPS = ['setup', 'bridge-break', 'measure', 'review', 'results'] as const;
 
 export default function PTAWizard() {
   const { ptaState, stopPTAMode, ptaGoToStep } = usePTAStore();
@@ -31,7 +31,7 @@ export default function PTAWizard() {
   }, [dragY, stopPTAMode]);
 
   const currentIdx = STEPS.indexOf(ptaState.step as typeof STEPS[number]);
-  const showNav = ptaState.step !== 'setup' || true;
+  const showNav = ptaState.step !== 'results';
 
   const canGoBack = ptaState.step !== 'setup';
   const canGoNext = (() => {
@@ -47,7 +47,11 @@ export default function PTAWizard() {
 
   const handleNext = () => {
     const idx = STEPS.indexOf(ptaState.step as typeof STEPS[number]);
-    if (idx < STEPS.length - 1) {
+    if (ptaState.step === 'review') {
+      // Generate curve before showing results
+      usePTAStore.getState().ptaGenerateCurve();
+      ptaGoToStep('results');
+    } else if (idx < STEPS.length - 1) {
       ptaGoToStep(STEPS[idx + 1]);
     }
   };
@@ -68,7 +72,7 @@ export default function PTAWizard() {
           position: 'fixed',
           inset: 0,
           background: 'rgba(0,0,0,0.5)',
-          zIndex: 100,
+          zIndex: 200,
         }}
       />
 
@@ -84,7 +88,7 @@ export default function PTAWizard() {
           background: 'var(--color-surface)',
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
-          zIndex: 101,
+          zIndex: 201,
           transform: dragY > 0 ? `translateY(${dragY}px)` : undefined,
           transition: dragY > 0 ? 'none' : 'transform 0.2s ease',
           display: 'flex',
@@ -102,6 +106,7 @@ export default function PTAWizard() {
           padding: '12px 16px',
           borderBottom: '1px solid var(--color-text-dim)',
           flexShrink: 0,
+          position: 'relative',
         }}>
           {/* Drag handle */}
           <div style={{

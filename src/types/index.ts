@@ -127,11 +127,11 @@ export type PTAStep = 'setup' | 'bridge-break' | 'measure' | 'review' | 'results
 /** Bridge break defaults per piano type (MIDI note numbers).
  *  Smaller piano → higher bridge break (wound strings extend further). */
 export const PTA_BRIDGE_BREAK_DEFAULTS: Record<PianoProfileName, number> = {
-  [PIANO_PROFILE_NAMES.CONCERT_GRAND]: MIDI_A0 + 23, // MIDI 44 (C#3)
-  [PIANO_PROFILE_NAMES.STUDIO_GRAND]: MIDI_A0 + 24,  // MIDI 45 (D3)
-  [PIANO_PROFILE_NAMES.BABY_GRAND]: MIDI_A0 + 25,    // MIDI 46 (D#3)
-  [PIANO_PROFILE_NAMES.UPRIGHT]: MIDI_A0 + 26,       // MIDI 47 (E3)
-  [PIANO_PROFILE_NAMES.CONSOLE]: MIDI_A0 + 27,       // MIDI 48 (F3)
+  [PIANO_PROFILE_NAMES.CONCERT_GRAND]: MIDI_A0 + 23, // MIDI 44 (G#2)
+  [PIANO_PROFILE_NAMES.STUDIO_GRAND]: MIDI_A0 + 24,  // MIDI 45 (A2)
+  [PIANO_PROFILE_NAMES.BABY_GRAND]: MIDI_A0 + 25,    // MIDI 46 (A#2)
+  [PIANO_PROFILE_NAMES.UPRIGHT]: MIDI_A0 + 26,       // MIDI 47 (B2)
+  [PIANO_PROFILE_NAMES.CONSOLE]: MIDI_A0 + 27,       // MIDI 48 (C3)
   [PIANO_PROFILE_NAMES.SPINET]: MIDI_A0 + 29,        // MIDI 50 (D3)
 } as const;
 

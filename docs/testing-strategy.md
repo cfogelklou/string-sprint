@@ -75,11 +75,11 @@ Array index = midi - 21 (MIDI_A0).
 
 | Type | Profile Key | Bridge Break (MIDI) | Bridge Break (Note) | Character |
 |---|---|---|---|---|
-| Concert Grand | `concertGrand` | 44 | C#3 | Lowest inharmonicity, longest strings |
-| Studio Grand | `studioGrand` | 45 | D3 | Low inharmonicity |
-| Baby Grand | `babyGrand` | 46 | D#3 | Moderate inharmonicity |
-| Upright | `upright` | 47 | E3 | Default profile |
-| Console | `console` | 48 | F3 | Higher inharmonicity |
+| Concert Grand | `concertGrand` | 44 | G#2 | Lowest inharmonicity, longest strings |
+| Studio Grand | `studioGrand` | 45 | A2 | Low inharmonicity |
+| Baby Grand | `babyGrand` | 46 | A#2 | Moderate inharmonicity |
+| Upright | `upright` | 47 | B2 | Default profile |
+| Console | `console` | 48 | C3 | Higher inharmonicity |
 | Spinet | `spinet` | 50 | D3 | Highest inharmonicity, shortest strings |
 
 ## 7. Octave Styles

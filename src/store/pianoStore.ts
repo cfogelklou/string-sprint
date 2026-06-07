@@ -353,6 +353,7 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
   },
 
   setReferenceFreq: (freq: number) => {
+    if (!Number.isFinite(freq) || freq <= 0) return;
     const { keys } = get();
     const bProfile = currentBProfile(get());
     set({

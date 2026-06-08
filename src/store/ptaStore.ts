@@ -82,6 +82,7 @@ interface PTAStoreActions {
   ptaCaptureSample: (midi: number, measuredB: number) => void;
   ptaGenerateCurve: () => void;
   ptaGoToStep: (step: PTAStep) => void;
+  ptaResetSample: (midi: number) => void;
   ptaPlaySampleNote: (midi: number) => void;
   ptaStopSampleNote: (midi: number) => void;
 }
@@ -189,6 +190,21 @@ export const usePTAStore = create<PTAStore>()((set, get) => ({
         meanErrorPct: meanRelativeErrorPct,
       },
     });
+  },
+
+  ptaResetSample: (midi: number) => {
+    const { ptaState } = get();
+    const nextSamples = ptaState.samples.map((s) => {
+      if (s.midi !== midi) return s;
+      return {
+        ...s,
+        measuredB: null,
+        error: null,
+        relativeErrorPct: null,
+        captured: false,
+      };
+    });
+    set({ ptaState: { ...ptaState, samples: nextSamples } });
   },
 
   ptaGoToStep: (step: PTAStep) => {

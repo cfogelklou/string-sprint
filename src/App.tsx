@@ -25,6 +25,9 @@ export default function App() {
   const toggleBCurveEditor = usePianoStore((s) => s.toggleBCurveEditor);
   const setMasterVolume = usePianoStore((s) => s.setMasterVolume);
 
+  const infiniteSustain = usePianoStore((s) => s.infiniteSustain);
+  const setInfiniteSustain = usePianoStore((s) => s.setInfiniteSustain);
+
   const isPlaying = tuningSimPhase === 'playing';
 
   // One-shot listener: init AudioContext on first user gesture
@@ -49,11 +52,12 @@ export default function App() {
   useEffect(() => {
     if (!isAudioInitialized) return;
     const engine = getEngine();
+    const sustain = usePianoStore.getState().infiniteSustain;
 
     // Play tones that are in store but not in engine
     for (const [midi, config] of activeTones) {
       if (!engine.isToneActive(midi)) {
-        engine.playTone(midi, config);
+        engine.playTone(midi, config, sustain);
       }
     }
     // Stop tones that are in engine but not in store
@@ -99,6 +103,14 @@ export default function App() {
             onChange={(e) => setMasterVolume(Number(e.target.value))}
             style={{ width: 70 }}
           />
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={infiniteSustain}
+            onChange={(e) => setInfiniteSustain(e.target.checked)}
+          />
+          <span style={{ opacity: 0.8 }}>∞ Sustain</span>
         </label>
         <span style={{ flex: 1 }} />
         {!isPlaying && (

@@ -39,7 +39,26 @@ export const AUDIO_CONFIG = {
   PARTIAL_AMPLITUDE_EXPONENT: 1.2,
   ATTACK_MS: 0.005,
   RELEASE_MS: 0.05,
+  /** Gain threshold for exponential decay cleanup (-40dB). */
+  DECAY_FLOOR: 0.01,
+  /** Damper release time in seconds — how fast the sound fades when key is released. */
+  DAMPER_RELEASE_MS: 0.200,
 } as const;
+
+/**
+ * Per-register envelope parameters for realistic piano decay.
+ * t60 = time for sound to decay to -60dB (inaudible) in seconds.
+ * attackMs = hammer strike rise time in seconds.
+ * Values from acoustic piano measurements (KTH, Askenfelt).
+ */
+export const REGISTER_ENVELOPE_TABLE = [
+  { midiLo: 21, midiHi: 35,  t60: 37,   attackMs: 0.004 },  // Low bass A0-B1
+  { midiLo: 36, midiHi: 47,  t60: 22,   attackMs: 0.003 },  // Mid bass C2-B2
+  { midiLo: 48, midiHi: 59,  t60: 15,   attackMs: 0.002 },  // Tenor C3-B3
+  { midiLo: 60, midiHi: 71,  t60: 11,   attackMs: 0.0015 }, // Midrange C4-B4
+  { midiLo: 72, midiHi: 83,  t60: 5,    attackMs: 0.001 },  // Treble C5-B6
+  { midiLo: 84, midiHi: 108, t60: 1.5,  attackMs: 0.0005 }, // High treble C7-C8
+] as const;
 
 export interface ToneConfig {
   frequency: number;

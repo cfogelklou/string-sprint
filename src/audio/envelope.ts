@@ -21,8 +21,8 @@ export function createEnvelope(
   const gainNode = audioCtx.createGain();
   const now = audioCtx.currentTime;
 
-  const attackEnd = now + AUDIO_CONFIG.ATTACK_MS;
-  const releaseStart = now + duration - AUDIO_CONFIG.RELEASE_MS;
+  const attackEnd = now + AUDIO_CONFIG.ATTACK_S;
+  const releaseStart = now + duration - AUDIO_CONFIG.RELEASE_S;
 
   gainNode.gain.setValueAtTime(0, now);
   gainNode.gain.linearRampToValueAtTime(peakGain, attackEnd);
@@ -50,7 +50,7 @@ export function getRegisterEnvelope(
 }
 
 /** Duration of the trailing silence ramp after exponential decay (seconds). */
-const TRAILING_SILENCE_S = 0.05;
+export const TRAILING_SILENCE_S = 0.05;
 
 /**
  * Schedule a realistic double-decay piano envelope on a gain AudioParam:

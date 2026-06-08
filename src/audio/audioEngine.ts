@@ -1,6 +1,6 @@
 import { AUDIO_CONFIG, ToneConfig } from '@/types';
 import { partialFreq, centsToFreqRatio } from '@/audio/partialFreq';
-import { partialAmplitude, scheduleDecayEnvelope, getRegisterEnvelope } from '@/audio/envelope';
+import { partialAmplitude, scheduleDecayEnvelope, getRegisterEnvelope, TRAILING_SILENCE_S } from '@/audio/envelope';
 
 interface ActiveTone {
   oscillators: OscillatorNode[];
@@ -57,7 +57,7 @@ export class AudioEngine {
     if (infiniteSustain) {
       // Classic behavior: attack ramp, hold forever
       envelopeGain.gain.setValueAtTime(0, now);
-      envelopeGain.gain.linearRampToValueAtTime(1, now + AUDIO_CONFIG.ATTACK_MS);
+      envelopeGain.gain.linearRampToValueAtTime(1, now + AUDIO_CONFIG.ATTACK_S);
     } else {
       // Realistic decay: attack → exponential decay → trailing silence
       scheduleDecayEnvelope(envelopeGain.gain, now, midiNote);
@@ -95,7 +95,7 @@ export class AudioEngine {
     if (!infiniteSustain) {
       // Schedule cleanup after full envelope duration (attack + t60 + trailing ramp)
       const { t60, attackMs } = getRegisterEnvelope(midiNote);
-      const totalMs = (attackMs + t60 + 0.05) * 1000 + 10; // trailing ramp + margin
+      const totalMs = (attackMs + t60 + TRAILING_SILENCE_S) * 1000 + 10; // trailing ramp + margin
       const timeoutId = setTimeout(() => {
         // Disconnect oscillators (wrapped in try/catch for dispose safety)
         for (const osc of oscillators) {
@@ -147,12 +147,12 @@ export class AudioEngine {
     tone.envelopeGain.gain.setTargetAtTime(
       0,
       now,
-      AUDIO_CONFIG.DAMPER_RELEASE_MS / 4,
+      AUDIO_CONFIG.DAMPER_RELEASE_S / 4,
     );
 
     const { oscillators, partialGains, envelopeGain } = tone;
 
-    const cleanupMs = AUDIO_CONFIG.DAMPER_RELEASE_MS * 1000;
+    const cleanupMs = AUDIO_CONFIG.DAMPER_RELEASE_S * 1000;
     setTimeout(() => {
       for (const osc of oscillators) {
         try { osc.stop(); } catch { /* already stopped */ }

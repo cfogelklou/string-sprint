@@ -37,10 +37,10 @@ export const AUDIO_CONFIG = {
   MAX_PARTIALS: 10,
   MAX_SIMULTANEOUS_TONES: 4,
   PARTIAL_AMPLITUDE_EXPONENT: 1.2,
-  ATTACK_MS: 0.005,
-  RELEASE_MS: 0.05,
+  ATTACK_S: 0.005,
+  RELEASE_S: 0.05,
   /** Damper release time in seconds — how fast the sound fades when key is released. */
-  DAMPER_RELEASE_MS: 0.200,
+  DAMPER_RELEASE_S: 0.200,
   /** Double-decay: prompt sound amplitude level (-14dB). Fast vertical vibration drop. */
   PROMPT_LEVEL: 0.2,
   /** Double-decay: fraction of t60 spent in prompt decay. */
@@ -52,7 +52,7 @@ export const AUDIO_CONFIG = {
 /**
  * Per-register envelope parameters for realistic piano decay.
  * t60 = time for sound to decay to -60dB (inaudible) in seconds.
- * attackMs = hammer strike rise time in seconds.
+ * attackMs = hammer strike rise time in seconds (field name is historical).
  * Values from acoustic piano measurements (KTH, Askenfelt).
  */
 export const REGISTER_ENVELOPE_TABLE = [

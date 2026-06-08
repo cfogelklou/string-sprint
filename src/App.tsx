@@ -32,20 +32,23 @@ export default function App() {
 
   // One-shot listener: init AudioContext on first user gesture
   useEffect(() => {
-    const handler = () => {
-      void init();
+    let removed = false;
+    const removeListeners = () => {
+      if (removed) return;
+      removed = true;
       document.removeEventListener('click', handler);
       document.removeEventListener('keydown', handler);
       document.removeEventListener('touchstart', handler);
+    };
+    const handler = () => {
+      init().then(removeListeners).catch(() => {
+        // Init failed — keep listeners attached so user can retry
+      });
     };
     document.addEventListener('click', handler);
     document.addEventListener('keydown', handler);
     document.addEventListener('touchstart', handler);
-    return () => {
-      document.removeEventListener('click', handler);
-      document.removeEventListener('keydown', handler);
-      document.removeEventListener('touchstart', handler);
-    };
+    return removeListeners;
   }, [init]);
 
   // Sync activeTones → AudioEngine

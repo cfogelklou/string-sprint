@@ -13,7 +13,13 @@ export class AudioEngine {
   private masterGain: GainNode | null = null;
   private tones: Map<number, ActiveTone> = new Map();
 
+  get isInitialized(): boolean {
+    return this.ctx !== null;
+  }
+
   async init(): Promise<void> {
+    if (this.ctx) return;
+
     this.ctx = new AudioContext();
     this.masterGain = this.ctx.createGain();
     this.masterGain.connect(this.ctx.destination);

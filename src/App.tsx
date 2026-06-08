@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
 import { useAudioEngine } from '@/hooks/useAudioEngine';
-import { AudioStartOverlay } from '@/components/AudioStartOverlay';
 import VirtualKeyboard from '@/components/VirtualKeyboard';
 import KeyboardMinimap from '@/components/KeyboardMinimap';
 import NoteSelector from '@/components/NoteSelector';
@@ -16,7 +15,7 @@ import TuningSimResultsPanel from '@/components/TuningSimResultsPanel';
 export default function App() {
   const isAudioInitialized = usePianoStore((s) => s.isAudioInitialized);
   const ptaActive = usePTAStore((s) => s.ptaActive);
-  const { getEngine } = useAudioEngine();
+  const { getEngine, init } = useAudioEngine();
 
   const masterVolume = usePianoStore((s) => s.masterVolume);
   const activeTones = usePianoStore((s) => s.activeTones);
@@ -27,6 +26,24 @@ export default function App() {
   const setMasterVolume = usePianoStore((s) => s.setMasterVolume);
 
   const isPlaying = tuningSimPhase === 'playing';
+
+  // One-shot listener: init AudioContext on first user gesture
+  useEffect(() => {
+    const handler = () => {
+      void init();
+      document.removeEventListener('click', handler);
+      document.removeEventListener('keydown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
+    document.addEventListener('click', handler);
+    document.addEventListener('keydown', handler);
+    document.addEventListener('touchstart', handler);
+    return () => {
+      document.removeEventListener('click', handler);
+      document.removeEventListener('keydown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
+  }, [init]);
 
   // Sync activeTones → AudioEngine
   useEffect(() => {
@@ -52,10 +69,6 @@ export default function App() {
     if (!isAudioInitialized) return;
     getEngine().setMasterVolume(masterVolume);
   }, [masterVolume, isAudioInitialized, getEngine]);
-
-  if (!isAudioInitialized) {
-    return <AudioStartOverlay />;
-  }
 
   return (
     <div id="fakepiano-app">

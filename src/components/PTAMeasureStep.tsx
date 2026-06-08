@@ -131,7 +131,7 @@ export default function PTAMeasureStep() {
                     if (e.key === 'Escape') { setEditingMidi(null); setInputValue(''); }
                   }}
                   placeholder="Enter B from strobopro"
-                  step={0.0001}
+                  step={0.0000001}
                   min={B_INPUT_MIN}
                   max={B_INPUT_MAX}
                   autoFocus

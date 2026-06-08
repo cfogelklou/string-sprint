@@ -177,7 +177,7 @@ export interface PTASampleMeasurement {
 }
 
 /** B value input validation bounds. */
-export const B_INPUT_MIN = 0.00001;
+export const B_INPUT_MIN = 0;
 export const B_INPUT_MAX = 0.1;
 
 /** PTA grading thresholds for sample measurement (mean relative B error %). */

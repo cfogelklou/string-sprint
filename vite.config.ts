@@ -16,7 +16,7 @@ export default defineConfig({
       manifest: {
         name: 'Fake Piano Tone Generator',
         short_name: 'FakePiano',
-        description: 'Inharmonic piano tone generator for testing strobe tuners',
+        description: 'Inharmonic piano tone generator for testing strobe tuners (specifically, StroboPro).',
         theme_color: '#1a1a2e',
         background_color: '#1a1a2e',
         display: 'standalone',

@@ -23,18 +23,28 @@ export class AudioEngine {
   }
 
   async init(): Promise<void> {
-    if (this.ctx) return;
+    if (this.ctx) {
+      // Already created — just ensure it's running
+      if (this.ctx.state === 'suspended') {
+        await this.ctx.resume();
+      }
+      return;
+    }
 
-    this.ctx = new AudioContext();
-    this.masterGain = this.ctx.createGain();
-    this.masterGain.connect(this.ctx.destination);
-    this.masterGain.gain.value = AUDIO_CONFIG.MAX_SIMULTANEOUS_TONES > 0
+    const ctx = new AudioContext();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    gain.gain.value = AUDIO_CONFIG.MAX_SIMULTANEOUS_TONES > 0
       ? 1 / AUDIO_CONFIG.MAX_SIMULTANEOUS_TONES
       : 1;
 
-    if (this.ctx.state === 'suspended') {
-      await this.ctx.resume();
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
     }
+
+    // Only assign after successful initialization
+    this.ctx = ctx;
+    this.masterGain = gain;
   }
 
   playTone(midiNote: number, config: ToneConfig, infiniteSustain: boolean): void {
@@ -42,12 +52,8 @@ export class AudioEngine {
       return;
     }
 
-    // Stop existing tone if already playing — clear its cleanup timeout first
+    // Stop existing tone if already playing — stopTone clears its cleanup timeout
     if (this.tones.has(midiNote)) {
-      const existing = this.tones.get(midiNote)!;
-      if (existing.cleanupTimeout !== null) {
-        clearTimeout(existing.cleanupTimeout);
-      }
       this.stopTone(midiNote);
     }
 

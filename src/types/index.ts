@@ -39,10 +39,14 @@ export const AUDIO_CONFIG = {
   PARTIAL_AMPLITUDE_EXPONENT: 1.2,
   ATTACK_MS: 0.005,
   RELEASE_MS: 0.05,
-  /** Gain threshold for exponential decay cleanup (-40dB). */
-  DECAY_FLOOR: 0.01,
   /** Damper release time in seconds — how fast the sound fades when key is released. */
   DAMPER_RELEASE_MS: 0.200,
+  /** Double-decay: prompt sound amplitude level (-14dB). Fast vertical vibration drop. */
+  PROMPT_LEVEL: 0.2,
+  /** Double-decay: fraction of t60 spent in prompt decay. */
+  PROMPT_FRACTION: 0.1,
+  /** Double-decay: aftersound floor (-60dB). */
+  AFTERSOUND_FLOOR: 0.001,
 } as const;
 
 /**

@@ -174,6 +174,7 @@ export const usePTAStore = create<PTAStore>()((set, get) => ({
       bValues,
       ptaState.octaveStyle,
       referenceFreq,
+      ptaState.bridgeBreakNote,
     );
 
     const { grade, meanRelativeErrorPct } = gradeSampleMeasurements(

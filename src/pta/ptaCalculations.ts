@@ -80,11 +80,12 @@ function solveForLowerFrequency(
 function getAlignment(
   arrayIndex: number,
   style: OctaveStyle,
+  bridgeBreakIndex: number = 27,
 ): OctaveAlignment {
   if (style === 'concert-grand') {
-    // Below strobopro piano key 28 (1-based) = array index 27: use 6:3
-    // At or above: use 4:2
-    return arrayIndex < 27
+    // Below bridge break: use 6:3 (wider stretch for bass)
+    // At or above bridge break: use 4:2 (standard stretch for treble)
+    return arrayIndex < bridgeBreakIndex
       ? OCTAVE_ALIGNMENTS['6:3']
       : OCTAVE_ALIGNMENTS['4:2'];
   }
@@ -107,9 +108,11 @@ export function calculateRailsbackOffset(
   bValues: number[],
   octaveStyle: OctaveStyle,
   referenceFreq: number = 440,
+  bridgeBreakMidi?: number,
 ): number[] {
   const centsOffset = new Array(NUM_KEYS).fill(0);
   const fStretched = new Array(NUM_KEYS).fill(0);
+  const bridgeBreakIndex = bridgeBreakMidi != null ? bridgeBreakMidi - MIDI_A0 : undefined;
 
   // Initialize reference note A4
   fStretched[INDEX_A4] = referenceFreq;
@@ -117,7 +120,7 @@ export function calculateRailsbackOffset(
 
   // Propagate upward (toward treble) semitone by semitone
   for (let i = INDEX_A4 + 1; i < NUM_KEYS; i++) {
-    const alignment = getAlignment(i, octaveStyle);
+    const alignment = getAlignment(i, octaveStyle, bridgeBreakIndex);
     const spanForStyle = alignment.semitoneSpan;
     const anchorIdx = i - spanForStyle;
     if (anchorIdx < 0 || fStretched[anchorIdx] === 0) {
@@ -143,7 +146,7 @@ export function calculateRailsbackOffset(
 
   // Propagate downward (toward bass) semitone by semitone
   for (let i = INDEX_A4 - 1; i >= 0; i--) {
-    const alignment = getAlignment(i, octaveStyle);
+    const alignment = getAlignment(i, octaveStyle, bridgeBreakIndex);
     const spanForStyle = alignment.semitoneSpan;
     const anchorIdx = i + spanForStyle;
     if (anchorIdx >= NUM_KEYS || fStretched[anchorIdx] === 0) {

@@ -1,5 +1,9 @@
 # PTA Test Mode — Simplified Plan
 
+> **Note**: This is a historical planning artifact. The implementation described
+> below has been completed. Line numbers and specific removals may not match the
+> current codebase. For the current testing strategy, see `testing-strategy.md`.
+
 ## Context (Plain English)
 
 **Fakepiano = speaker. Strobopro = listener.**

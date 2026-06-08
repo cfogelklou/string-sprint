@@ -11,7 +11,7 @@ Fakepiano is a **deterministic test oracle** for Strobopro's Piano Tuning Assist
 | Piano Type (6 types) | Select piano classification → sets default bridge break + loads B profile | Select profile → tones generated with exact B values from `PIANO_B_PROFILES` |
 | Octave Style (4:2, 6:3, pure-12ths, concert-grand) | Determines which partials to align for stretch curve | Generate stretch curve using `calculateRailsbackOffset` with specific alignment |
 | Reference Frequency | Sets A4 pitch standard (default 440 Hz) | Override `referenceFreq` in store → all `midiToFreq` calls use new reference |
-| Bridge Break | User identifies wound→plain string transition | Gamified: auto-play ascending notes, user taps transition point |
+| Bridge Break | User identifies wound→plain string transition | Informative: shows default bridge break note for selected type, explains wound vs plain strings, optional slider to adjust |
 | Sample Note Measurement | FFT harmonic capture on 8 notes → compute B via regression | Play tone with known B → user measures with Strobopro → enters B for comparison |
 | Stretch Curve Generation | Propagate from A4 outward using partial alignment | Compare generated cents offsets to expected Railsback curve |
 

@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
 import { useAudioEngine } from '@/hooks/useAudioEngine';
-import { AudioStartOverlay } from '@/components/AudioStartOverlay';
 import VirtualKeyboard from '@/components/VirtualKeyboard';
 import KeyboardMinimap from '@/components/KeyboardMinimap';
 import NoteSelector from '@/components/NoteSelector';
@@ -16,7 +15,7 @@ import TuningSimResultsPanel from '@/components/TuningSimResultsPanel';
 export default function App() {
   const isAudioInitialized = usePianoStore((s) => s.isAudioInitialized);
   const ptaActive = usePTAStore((s) => s.ptaActive);
-  const { getEngine } = useAudioEngine();
+  const { getEngine, init } = useAudioEngine();
 
   const masterVolume = usePianoStore((s) => s.masterVolume);
   const activeTones = usePianoStore((s) => s.activeTones);
@@ -26,17 +25,42 @@ export default function App() {
   const toggleBCurveEditor = usePianoStore((s) => s.toggleBCurveEditor);
   const setMasterVolume = usePianoStore((s) => s.setMasterVolume);
 
+  const infiniteSustain = usePianoStore((s) => s.infiniteSustain);
+  const setInfiniteSustain = usePianoStore((s) => s.setInfiniteSustain);
+
   const isPlaying = tuningSimPhase === 'playing';
+
+  // One-shot listener: init AudioContext on first user gesture
+  useEffect(() => {
+    let removed = false;
+    const removeListeners = () => {
+      if (removed) return;
+      removed = true;
+      document.removeEventListener('click', handler);
+      document.removeEventListener('keydown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
+    const handler = () => {
+      init().then(removeListeners).catch(() => {
+        // Init failed — keep listeners attached so user can retry
+      });
+    };
+    document.addEventListener('click', handler);
+    document.addEventListener('keydown', handler);
+    document.addEventListener('touchstart', handler);
+    return removeListeners;
+  }, [init]);
 
   // Sync activeTones → AudioEngine
   useEffect(() => {
     if (!isAudioInitialized) return;
     const engine = getEngine();
+    const sustain = usePianoStore.getState().infiniteSustain;
 
     // Play tones that are in store but not in engine
     for (const [midi, config] of activeTones) {
       if (!engine.isToneActive(midi)) {
-        engine.playTone(midi, config);
+        engine.playTone(midi, config, sustain);
       }
     }
     // Stop tones that are in engine but not in store
@@ -52,10 +76,6 @@ export default function App() {
     if (!isAudioInitialized) return;
     getEngine().setMasterVolume(masterVolume);
   }, [masterVolume, isAudioInitialized, getEngine]);
-
-  if (!isAudioInitialized) {
-    return <AudioStartOverlay />;
-  }
 
   return (
     <div id="fakepiano-app">
@@ -86,6 +106,14 @@ export default function App() {
             onChange={(e) => setMasterVolume(Number(e.target.value))}
             style={{ width: 70 }}
           />
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={infiniteSustain}
+            onChange={(e) => setInfiniteSustain(e.target.checked)}
+          />
+          <span style={{ opacity: 0.8 }}>∞ Sustain</span>
         </label>
         <span style={{ flex: 1 }} />
         {!isPlaying && (

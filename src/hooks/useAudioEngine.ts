@@ -7,6 +7,9 @@ let engineInstance: AudioEngine | null = null;
 function getEngine(): AudioEngine {
   if (!engineInstance) {
     engineInstance = new AudioEngine();
+    // Wire callback so engine can sync store when tone naturally decays
+    engineInstance.onToneExpired = (midi) =>
+      usePianoStore.getState().stopNote(midi);
   }
   return engineInstance;
 }

@@ -46,6 +46,9 @@ interface PianoState {
   // Active tones
   activeTones: Map<number, ToneConfig>;
 
+  // Envelope mode
+  infiniteSustain: boolean;
+
   // Tuning simulation — game phase
   tuningSimPhase: TuningSimPhase;
   tuningSimStretch: StretchStrategy;
@@ -73,6 +76,7 @@ const DEFAULT_PIANO_STATE: PianoState = {
   keys: generate88Keys(PIANO_B_PROFILES[PIANO_PROFILE_NAMES.UPRIGHT]),
   selectedKeyId: null,
   activeTones: new Map(),
+  infiniteSustain: false,
   tuningSimPhase: 'idle',
   tuningSimStretch: DEFAULT_STRETCH_STRATEGY,
   tuningSimTargets: new Array(NUM_KEYS).fill(0),
@@ -97,10 +101,11 @@ interface PianoActions {
   setCentsOffset: (midi: number, cents: number) => void;
   setMasterVolume: (v: number) => void;
   setNumPartials: (n: number) => void;
+  setInfiniteSustain: (value: boolean) => void;
   setCustomParam: (key: keyof RigaudParams, value: number) => void;
   setUseCustomProfile: (use: boolean) => void;
   toggleBCurveEditor: () => void;
-  startTuningSim: (stretch: StretchStrategy) => void;
+  startTuningSim: () => void;
   stopTuningSim: () => void;
   commitNote: (midi: number) => void;
   revealResults: () => void;
@@ -224,6 +229,10 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
     set({ numPartials: n });
   },
 
+  setInfiniteSustain: (value: boolean) => {
+    set({ infiniteSustain: value });
+  },
+
   setCustomParam: (paramKey: keyof RigaudParams, value: number) => {
     const { customParams, useCustomProfile, keys } = get();
     const nextParams = { ...customParams, [paramKey]: value };
@@ -264,9 +273,10 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
   // Tuning simulation game actions
   // ---------------------------------------------------------------------------
 
-  startTuningSim: (stretch: StretchStrategy) => {
+  startTuningSim: () => {
     const { keys } = get();
     const bProfile = currentBProfile(get());
+    const stretch: StretchStrategy = { kind: 'equal' };
     const targets = computeTargets(stretch, bProfile);
     const nextKeys = keys.map((k) => ({
       ...k,

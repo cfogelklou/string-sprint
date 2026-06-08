@@ -10,7 +10,7 @@ function errorColor(pct: number | null): string {
 }
 
 export default function PTAMeasureStep() {
-  const { ptaState, ptaCaptureSample, ptaPlaySampleNote, ptaStopSampleNote } = usePTAStore();
+  const { ptaState, ptaCaptureSample, ptaResetSample, ptaPlaySampleNote, ptaStopSampleNote } = usePTAStore();
   const [editingMidi, setEditingMidi] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState('');
 
@@ -104,8 +104,9 @@ export default function PTAMeasureStep() {
                   </span>
                   <button
                     onClick={() => {
+                      ptaResetSample(sample.midi);
                       setEditingMidi(sample.midi);
-                      setInputValue(sample.measuredB!.toString());
+                      setInputValue('');
                     }}
                     style={{
                       background: 'none',

@@ -1,11 +1,12 @@
 import { AUDIO_CONFIG, ToneConfig } from '@/types';
 import { partialFreq, centsToFreqRatio } from '@/audio/partialFreq';
-import { partialAmplitude } from '@/audio/envelope';
+import { partialAmplitude, scheduleDecayEnvelope, getRegisterEnvelope, TRAILING_SILENCE_S } from '@/audio/envelope';
 
 interface ActiveTone {
   oscillators: OscillatorNode[];
   partialGains: GainNode[];
   envelopeGain: GainNode;
+  cleanupTimeout: ReturnType<typeof setTimeout> | null;
 }
 
 export class AudioEngine {
@@ -13,32 +14,61 @@ export class AudioEngine {
   private masterGain: GainNode | null = null;
   private tones: Map<number, ActiveTone> = new Map();
 
+  /** Called when a tone's natural decay completes and the note should be
+   *  removed from the store. Wired externally to keep engine store-agnostic. */
+  onToneExpired: ((midi: number) => void) | null = null;
+
+  get isInitialized(): boolean {
+    return this.ctx !== null;
+  }
+
   async init(): Promise<void> {
-    this.ctx = new AudioContext();
-    this.masterGain = this.ctx.createGain();
-    this.masterGain.connect(this.ctx.destination);
-    this.masterGain.gain.value = AUDIO_CONFIG.MAX_SIMULTANEOUS_TONES > 0
+    if (this.ctx) {
+      // Already created — just ensure it's running
+      if (this.ctx.state === 'suspended') {
+        await this.ctx.resume();
+      }
+      return;
+    }
+
+    const ctx = new AudioContext();
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    gain.gain.value = AUDIO_CONFIG.MAX_SIMULTANEOUS_TONES > 0
       ? 1 / AUDIO_CONFIG.MAX_SIMULTANEOUS_TONES
       : 1;
 
-    if (this.ctx.state === 'suspended') {
-      await this.ctx.resume();
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
     }
+
+    // Only assign after successful initialization
+    this.ctx = ctx;
+    this.masterGain = gain;
   }
 
-  playTone(midiNote: number, config: ToneConfig): void {
+  playTone(midiNote: number, config: ToneConfig, infiniteSustain: boolean): void {
     if (!this.ctx || !this.masterGain) {
       return;
     }
 
+    // Stop existing tone if already playing — stopTone clears its cleanup timeout
     if (this.tones.has(midiNote)) {
       this.stopTone(midiNote);
     }
 
     const now = this.ctx.currentTime;
     const envelopeGain = this.ctx.createGain();
-    envelopeGain.gain.setValueAtTime(0, now);
-    envelopeGain.gain.linearRampToValueAtTime(1, now + AUDIO_CONFIG.ATTACK_MS);
+
+    if (infiniteSustain) {
+      // Classic behavior: attack ramp, hold forever
+      envelopeGain.gain.setValueAtTime(0, now);
+      envelopeGain.gain.linearRampToValueAtTime(1, now + AUDIO_CONFIG.ATTACK_S);
+    } else {
+      // Realistic decay: attack → exponential decay → trailing silence
+      scheduleDecayEnvelope(envelopeGain.gain, now, midiNote);
+    }
+
     envelopeGain.connect(this.masterGain);
 
     const centsRatio = centsToFreqRatio(config.centsOffset);
@@ -66,7 +96,36 @@ export class AudioEngine {
       partialGains.push(partialGain);
     }
 
-    this.tones.set(midiNote, { oscillators, partialGains, envelopeGain });
+    let cleanupTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    if (!infiniteSustain) {
+      // Schedule cleanup after full envelope duration (attack + t60 + trailing ramp)
+      const { t60, attackMs } = getRegisterEnvelope(midiNote);
+      const totalMs = (attackMs + t60 + TRAILING_SILENCE_S) * 1000 + 10; // trailing ramp + margin
+      const timeoutId = setTimeout(() => {
+        // Disconnect oscillators (wrapped in try/catch for dispose safety)
+        for (const osc of oscillators) {
+          try { osc.stop(); } catch { /* already stopped */ }
+          try { osc.disconnect(); } catch { /* already disconnected */ }
+        }
+        for (const pg of partialGains) {
+          try { pg.disconnect(); } catch { /* already disconnected */ }
+        }
+        try { envelopeGain.disconnect(); } catch { /* already disconnected */ }
+
+        // Remove from engine map (only if this timeout is still current)
+        const current = this.tones.get(midiNote);
+        if (current && current.cleanupTimeout === timeoutId) {
+          this.tones.delete(midiNote);
+        }
+
+        // Sync store so the sync effect doesn't resurrect the note
+        this.onToneExpired?.(midiNote);
+      }, totalMs);
+      cleanupTimeout = timeoutId;
+    }
+
+    this.tones.set(midiNote, { oscillators, partialGains, envelopeGain, cleanupTimeout });
   }
 
   stopTone(midiNote: number): void {
@@ -79,29 +138,36 @@ export class AudioEngine {
       return;
     }
 
-    const now = this.ctx.currentTime;
-    const releaseEnd = now + AUDIO_CONFIG.RELEASE_MS;
+    // Clear any pending decay cleanup timeout
+    if (tone.cleanupTimeout !== null) {
+      clearTimeout(tone.cleanupTimeout);
+      tone.cleanupTimeout = null;
+    }
 
+    const now = this.ctx.currentTime;
+
+    // Cancel future automation, then use setTargetAtTime to smoothly
+    // ramp from current automated level to 0 — avoids reading .value
+    // which is unreliable during automation
     tone.envelopeGain.gain.cancelScheduledValues(now);
-    tone.envelopeGain.gain.setValueAtTime(tone.envelopeGain.gain.value, now);
-    tone.envelopeGain.gain.linearRampToValueAtTime(0, releaseEnd);
+    tone.envelopeGain.gain.setTargetAtTime(
+      0,
+      now,
+      AUDIO_CONFIG.DAMPER_RELEASE_S / 4,
+    );
 
     const { oscillators, partialGains, envelopeGain } = tone;
 
-    const cleanupMs = AUDIO_CONFIG.RELEASE_MS * 1000;
+    const cleanupMs = AUDIO_CONFIG.DAMPER_RELEASE_S * 1000;
     setTimeout(() => {
       for (const osc of oscillators) {
-        try {
-          osc.stop();
-        } catch {
-          // Already stopped — ignore
-        }
-        osc.disconnect();
+        try { osc.stop(); } catch { /* already stopped */ }
+        try { osc.disconnect(); } catch { /* already disconnected */ }
       }
       for (const pg of partialGains) {
-        pg.disconnect();
+        try { pg.disconnect(); } catch { /* already disconnected */ }
       }
-      envelopeGain.disconnect();
+      try { envelopeGain.disconnect(); } catch { /* already disconnected */ }
     }, cleanupMs + 10);
 
     this.tones.delete(midiNote);
@@ -129,6 +195,12 @@ export class AudioEngine {
   }
 
   dispose(): void {
+    // Clear all pending cleanup timeouts before stopping
+    for (const tone of this.tones.values()) {
+      if (tone.cleanupTimeout !== null) {
+        clearTimeout(tone.cleanupTimeout);
+      }
+    }
     this.stopAll();
     if (this.ctx) {
       void this.ctx.close();

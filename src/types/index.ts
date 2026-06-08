@@ -37,9 +37,32 @@ export const AUDIO_CONFIG = {
   MAX_PARTIALS: 10,
   MAX_SIMULTANEOUS_TONES: 4,
   PARTIAL_AMPLITUDE_EXPONENT: 1.2,
-  ATTACK_MS: 0.005,
-  RELEASE_MS: 0.05,
+  ATTACK_S: 0.005,
+  RELEASE_S: 0.05,
+  /** Damper release time in seconds — how fast the sound fades when key is released. */
+  DAMPER_RELEASE_S: 0.200,
+  /** Double-decay: prompt sound amplitude level (-14dB). Fast vertical vibration drop. */
+  PROMPT_LEVEL: 0.2,
+  /** Double-decay: fraction of t60 spent in prompt decay. */
+  PROMPT_FRACTION: 0.1,
+  /** Double-decay: aftersound floor (-60dB). */
+  AFTERSOUND_FLOOR: 0.001,
 } as const;
+
+/**
+ * Per-register envelope parameters for realistic piano decay.
+ * t60 = time for sound to decay to -60dB (inaudible) in seconds.
+ * attackMs = hammer strike rise time in seconds (field name is historical).
+ * Values from acoustic piano measurements (KTH, Askenfelt).
+ */
+export const REGISTER_ENVELOPE_TABLE = [
+  { midiLo: 21, midiHi: 35,  t60: 37,   attackMs: 0.004 },  // Low bass A0-B1
+  { midiLo: 36, midiHi: 47,  t60: 22,   attackMs: 0.003 },  // Mid bass C2-B2
+  { midiLo: 48, midiHi: 59,  t60: 15,   attackMs: 0.002 },  // Tenor C3-B3
+  { midiLo: 60, midiHi: 71,  t60: 11,   attackMs: 0.0015 }, // Midrange C4-B4
+  { midiLo: 72, midiHi: 83,  t60: 5,    attackMs: 0.001 },  // Treble C5-B6
+  { midiLo: 84, midiHi: 108, t60: 1.5,  attackMs: 0.0005 }, // High treble C7-C8
+] as const;
 
 export interface ToneConfig {
   frequency: number;

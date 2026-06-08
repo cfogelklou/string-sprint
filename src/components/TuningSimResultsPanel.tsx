@@ -108,7 +108,6 @@ export default function TuningSimResultsPanel() {
   const tuningSimResults = usePianoStore((s) => s.tuningSimResults);
   const backToPlaying = usePianoStore((s) => s.backToPlaying);
   const startTuningSim = usePianoStore((s) => s.startTuningSim);
-  const tuningSimStretch = usePianoStore((s) => s.tuningSimStretch);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -363,7 +362,7 @@ export default function TuningSimResultsPanel() {
           </button>
           <button
             onClick={() => {
-              startTuningSim(tuningSimStretch);
+              startTuningSim();
             }}
             style={{
               flex: 1,

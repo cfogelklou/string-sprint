@@ -139,12 +139,16 @@ export class AudioEngine {
     }
 
     const now = this.ctx.currentTime;
-    const epsilon = 0.001;
-    const releaseEnd = now + epsilon + AUDIO_CONFIG.DAMPER_RELEASE_MS;
 
-    tone.envelopeGain.gain.cancelScheduledValues(now + epsilon);
-    tone.envelopeGain.gain.setValueAtTime(tone.envelopeGain.gain.value, now + epsilon);
-    tone.envelopeGain.gain.linearRampToValueAtTime(0, releaseEnd);
+    // Cancel future automation, then use setTargetAtTime to smoothly
+    // ramp from current automated level to 0 — avoids reading .value
+    // which is unreliable during automation
+    tone.envelopeGain.gain.cancelScheduledValues(now);
+    tone.envelopeGain.gain.setTargetAtTime(
+      0,
+      now,
+      AUDIO_CONFIG.DAMPER_RELEASE_MS / 4,
+    );
 
     const { oscillators, partialGains, envelopeGain } = tone;
 

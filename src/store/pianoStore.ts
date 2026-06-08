@@ -105,7 +105,7 @@ interface PianoActions {
   setCustomParam: (key: keyof RigaudParams, value: number) => void;
   setUseCustomProfile: (use: boolean) => void;
   toggleBCurveEditor: () => void;
-  startTuningSim: (stretch: StretchStrategy) => void;
+  startTuningSim: () => void;
   stopTuningSim: () => void;
   commitNote: (midi: number) => void;
   revealResults: () => void;
@@ -273,9 +273,10 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
   // Tuning simulation game actions
   // ---------------------------------------------------------------------------
 
-  startTuningSim: (stretch: StretchStrategy) => {
+  startTuningSim: () => {
     const { keys } = get();
     const bProfile = currentBProfile(get());
+    const stretch: StretchStrategy = { kind: 'equal' };
     const targets = computeTargets(stretch, bProfile);
     const nextKeys = keys.map((k) => ({
       ...k,

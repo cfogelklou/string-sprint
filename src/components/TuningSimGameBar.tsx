@@ -4,7 +4,6 @@ import { NUM_KEYS } from '@/types';
 export default function TuningSimGameBar() {
   const selectedKeyId = usePianoStore((s) => s.selectedKeyId);
   const tuningSimCompleted = usePianoStore((s) => s.tuningSimCompleted);
-  const tuningSimStretch = usePianoStore((s) => s.tuningSimStretch);
   const commitNote = usePianoStore((s) => s.commitNote);
   const revealResults = usePianoStore((s) => s.revealResults);
   const randomizeUncommitted = usePianoStore((s) => s.randomizeUncommitted);
@@ -12,12 +11,6 @@ export default function TuningSimGameBar() {
 
   const committedCount = tuningSimCompleted.size;
   const canCommit = selectedKeyId !== null && !tuningSimCompleted.has(selectedKeyId);
-
-  const stretchLabel = tuningSimStretch.kind === 'equal'
-    ? 'Equal Temperament'
-    : tuningSimStretch.kind === 'railsback'
-      ? 'Railsback Stretch'
-      : `Partial ${tuningSimStretch.partial} Align`;
 
   // Shared button style
   const btnStyle = (bg: string) => ({
@@ -43,7 +36,7 @@ export default function TuningSimGameBar() {
       borderRadius: 8,
       flexWrap: 'wrap',
     }}>
-      <span style={{ fontSize: 12, color: 'var(--color-text-dim)' }}>{stretchLabel}</span>
+      <span style={{ fontSize: 12, color: 'var(--color-text-dim)' }}>Equal Tuning Sim</span>
       <span style={{ fontSize: 12, fontWeight: 600 }}>
         {committedCount}/{NUM_KEYS} committed
       </span>

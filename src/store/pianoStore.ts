@@ -29,6 +29,9 @@ interface PianoState {
   sustainDuration: number;
   numPartials: number;
 
+  // Reference frequency
+  referenceFreq: number;
+
   // B coefficients
   activeProfile: PianoProfileName;
   customParams: RigaudParams;
@@ -63,6 +66,7 @@ const DEFAULT_PIANO_STATE: PianoState = {
   masterVolume: 0.5,
   sustainDuration: 2.0,
   numPartials: AUDIO_CONFIG.MAX_PARTIALS,
+  referenceFreq: 440,
   activeProfile: PIANO_PROFILE_NAMES.UPRIGHT,
   customParams: { ...DEFAULT_RIGAUD_PARAMS[PIANO_PROFILE_NAMES.UPRIGHT] },
   useCustomProfile: false,
@@ -104,6 +108,7 @@ interface PianoActions {
   randomizeUncommitted: () => void;
   setTuningSimTarget: (midi: number) => void;
   resetTuning: () => void;
+  setReferenceFreq: (freq: number) => void;
 }
 
 type PianoStore = PianoState & PianoActions;
@@ -115,12 +120,13 @@ type PianoStore = PianoState & PianoActions;
 function regenerateKeys(
   bProfile: number[],
   prevKeys: PianoKey[],
+  a4: number = 440,
 ): PianoKey[] {
   const offsets = new Map<number, number>();
   for (const k of prevKeys) {
     offsets.set(k.midiNote, k.centsOffset);
   }
-  const fresh = generate88Keys(bProfile);
+  const fresh = generate88Keys(bProfile, a4);
   return fresh.map((k) => ({
     ...k,
     centsOffset: offsets.get(k.midiNote) ?? 0,
@@ -155,14 +161,14 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
       set({
         activeProfile: name,
         customParams: { ...DEFAULT_RIGAUD_PARAMS[name] },
-        keys: regenerateKeys(bProfile, keys),
+        keys: regenerateKeys(bProfile, keys, get().referenceFreq),
       });
     } else {
       const bProfile = PIANO_B_PROFILES[name];
       set({
         activeProfile: name,
         customParams: { ...DEFAULT_RIGAUD_PARAMS[name] },
-        keys: regenerateKeys(bProfile, keys),
+        keys: regenerateKeys(bProfile, keys, get().referenceFreq),
       });
     }
   },
@@ -172,13 +178,13 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
   },
 
   playNote: (midi: number) => {
-    const { keys, numPartials, sustainDuration } = get();
+    const { keys, numPartials, sustainDuration, referenceFreq } = get();
     const keyIndex = midi - MIDI_A0;
     const key = keys[keyIndex];
     if (!key) return;
 
     const tone: ToneConfig = {
-      frequency: midiToFreq(midi),
+      frequency: midiToFreq(midi, referenceFreq),
       B: key.B,
       centsOffset: key.centsOffset,
       numPartials,
@@ -225,7 +231,7 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
       const bProfile = generateProfile(nextParams);
       set({
         customParams: nextParams,
-        keys: regenerateKeys(bProfile, keys),
+        keys: regenerateKeys(bProfile, keys, get().referenceFreq),
       });
     } else {
       set({ customParams: nextParams });
@@ -238,14 +244,14 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
       const bProfile = generateProfile(customParams);
       set({
         useCustomProfile: true,
-        keys: regenerateKeys(bProfile, keys),
+        keys: regenerateKeys(bProfile, keys, get().referenceFreq),
       });
     } else {
       const { activeProfile } = get();
       const bProfile = PIANO_B_PROFILES[activeProfile];
       set({
         useCustomProfile: false,
-        keys: regenerateKeys(bProfile, keys),
+        keys: regenerateKeys(bProfile, keys, get().referenceFreq),
       });
     }
   },
@@ -344,5 +350,15 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
     const { keys } = get();
     const nextKeys = keys.map((k) => ({ ...k, centsOffset: 0 }));
     set({ keys: nextKeys });
+  },
+
+  setReferenceFreq: (freq: number) => {
+    if (!Number.isFinite(freq) || freq <= 0) return;
+    const { keys } = get();
+    const bProfile = currentBProfile(get());
+    set({
+      referenceFreq: freq,
+      keys: regenerateKeys(bProfile, keys, freq),
+    });
   },
 }));

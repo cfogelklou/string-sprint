@@ -19,7 +19,7 @@ export function isBlackKey(midi: number): boolean {
   return BLACK_KEY_INDICES.has(midi % 12);
 }
 
-export function generate88Keys(bProfile: number[]): PianoKey[] {
+export function generate88Keys(bProfile: number[], a4: number = DEFAULT_A4): PianoKey[] {
   const keys: PianoKey[] = [];
   for (let i = 0; i < NUM_KEYS; i++) {
     const midi = MIDI_A0 + i;
@@ -27,7 +27,7 @@ export function generate88Keys(bProfile: number[]): PianoKey[] {
       midiNote: midi,
       name: midiToNoteName(midi),
       isBlack: isBlackKey(midi),
-      fundamentalFreq: midiToFreq(midi),
+      fundamentalFreq: midiToFreq(midi, a4),
       B: bProfile[i],
       centsOffset: 0,
     });

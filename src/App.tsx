@@ -8,11 +8,14 @@ import NoteSelector from '@/components/NoteSelector';
 import CentsJogWheel from '@/components/CentsJogWheel';
 import ProfilePicker from '@/components/ProfilePicker';
 import BCurveEditor from '@/components/BCurveEditor';
+import PTAWizard from '@/components/PTAWizard';
+import { usePTAStore } from '@/store/ptaStore';
 import TuningSimPanel from '@/components/TuningSimPanel';
 import TuningSimResultsPanel from '@/components/TuningSimResultsPanel';
 
 export default function App() {
   const isAudioInitialized = usePianoStore((s) => s.isAudioInitialized);
+  const ptaActive = usePTAStore((s) => s.ptaActive);
   const { getEngine } = useAudioEngine();
 
   const masterVolume = usePianoStore((s) => s.masterVolume);
@@ -120,6 +123,9 @@ export default function App() {
 
       {/* B Curve editor overlay */}
       <BCurveEditor />
+
+      {/* PTA wizard overlay */}
+      {ptaActive && <PTAWizard />}
 
       {/* Results reveal overlay */}
       <TuningSimResultsPanel />

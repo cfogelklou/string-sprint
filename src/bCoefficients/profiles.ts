@@ -98,6 +98,7 @@ export const PIANO_B_PROFILES: Record<PianoProfileName, number[]> = {
     0.0049883, 0.0054719, 0.0060025, 0.0065846, 0.0072232, 0.0079237, 0.0086923, 0.0095354,
     0.0104604, 0.0114751, 0.0125883, 0.0138095, 0.0151492, 0.0166189, 0.0182313, 0.0200000,
   ],
+  [PIANO_PROFILE_NAMES.IDEAL]: new Array(NUM_KEYS).fill(0),
 };
 
 export const PROFILE_LABELS: Record<PianoProfileName, string> = {
@@ -108,6 +109,7 @@ export const PROFILE_LABELS: Record<PianoProfileName, string> = {
   [PIANO_PROFILE_NAMES.CONSOLE]: 'Console',
   [PIANO_PROFILE_NAMES.SPINET]: 'Spinet',
   [PIANO_PROFILE_NAMES.OTHER]: 'Other',
+  [PIANO_PROFILE_NAMES.IDEAL]: 'Ideal',
 };
 
 export function getBForNote(profile: PianoProfileName, midiNote: number): number {

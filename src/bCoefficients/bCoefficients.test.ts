@@ -5,9 +5,12 @@ import { DEFAULT_RIGAUD_PARAMS, rigaudB, generateProfile } from './rigaud';
 
 const PROFILE_NAMES = Object.values(PIANO_PROFILE_NAMES) as PianoProfileName[];
 
+/** Profiles with physical (non-zero) B coefficients. IDEAL is excluded because it has all-zero B values. */
+const PHYSICAL_PROFILES = PROFILE_NAMES.filter((n) => n !== PIANO_PROFILE_NAMES.IDEAL);
+
 describe('PIANO_B_PROFILES', () => {
-  it('has all 7 profiles', () => {
-    expect(PROFILE_NAMES).toHaveLength(7);
+  it('has all 8 profiles', () => {
+    expect(PROFILE_NAMES).toHaveLength(8);
     for (const name of PROFILE_NAMES) {
       expect(PIANO_B_PROFILES[name]).toBeDefined();
     }
@@ -19,8 +22,8 @@ describe('PIANO_B_PROFILES', () => {
     }
   });
 
-  it('all B values are positive numbers', () => {
-    for (const name of PROFILE_NAMES) {
+  it('all B values are positive numbers (physical profiles only)', () => {
+    for (const name of PHYSICAL_PROFILES) {
       for (const b of PIANO_B_PROFILES[name]) {
         expect(b).toBeGreaterThan(0);
         expect(Number.isFinite(b)).toBe(true);
@@ -28,8 +31,16 @@ describe('PIANO_B_PROFILES', () => {
     }
   });
 
-  it('exhibits U-shape: bass and treble higher than midrange', () => {
-    for (const name of PROFILE_NAMES) {
+  it('IDEAL profile has all-zero B values', () => {
+    const ideal = PIANO_B_PROFILES[PIANO_PROFILE_NAMES.IDEAL];
+    expect(ideal).toHaveLength(NUM_KEYS);
+    for (const b of ideal) {
+      expect(b).toBe(0);
+    }
+  });
+
+  it('exhibits U-shape: bass and treble higher than midrange (physical profiles only)', () => {
+    for (const name of PHYSICAL_PROFILES) {
       const values = PIANO_B_PROFILES[name];
       const first = values[0];
       const last = values[values.length - 1];
@@ -106,9 +117,9 @@ describe('Rigaud parametric model', () => {
     }
   });
 
-  it('generates values matching tabulated profiles within ±10% tolerance', () => {
+  it('generates values matching tabulated profiles within ±10% tolerance (physical profiles only)', () => {
     const tolerance = 0.10;
-    for (const name of PROFILE_NAMES) {
+    for (const name of PHYSICAL_PROFILES) {
       const params = DEFAULT_RIGAUD_PARAMS[name];
       const generated = generateProfile(params);
       const tabulated = PIANO_B_PROFILES[name];

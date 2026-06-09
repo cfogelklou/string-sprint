@@ -12,6 +12,7 @@ const PIANO_TYPES = [
   PIANO_PROFILE_NAMES.CONSOLE,
   PIANO_PROFILE_NAMES.SPINET,
   PIANO_PROFILE_NAMES.OTHER,
+  PIANO_PROFILE_NAMES.IDEAL,
 ] as const;
 
 const OCTAVE_STYLES: { value: OctaveStyle; label: string }[] = [

@@ -6,8 +6,8 @@ import { DEFAULT_RIGAUD_PARAMS, rigaudB, generateProfile } from './rigaud';
 const PROFILE_NAMES = Object.values(PIANO_PROFILE_NAMES) as PianoProfileName[];
 
 describe('PIANO_B_PROFILES', () => {
-  it('has all 6 profiles', () => {
-    expect(PROFILE_NAMES).toHaveLength(6);
+  it('has all 7 profiles', () => {
+    expect(PROFILE_NAMES).toHaveLength(7);
     for (const name of PROFILE_NAMES) {
       expect(PIANO_B_PROFILES[name]).toBeDefined();
     }

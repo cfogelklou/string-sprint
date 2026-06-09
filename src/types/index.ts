@@ -83,6 +83,7 @@ export const PIANO_PROFILE_NAMES = {
   UPRIGHT: 'upright',
   CONSOLE: 'console',
   SPINET: 'spinet',
+  OTHER: 'other',
 } as const;
 
 export type PianoProfileName =
@@ -156,6 +157,7 @@ export const PTA_BRIDGE_BREAK_DEFAULTS: Record<PianoProfileName, number> = {
   [PIANO_PROFILE_NAMES.UPRIGHT]: MIDI_A0 + 26,       // MIDI 47 (B2)
   [PIANO_PROFILE_NAMES.CONSOLE]: MIDI_A0 + 27,       // MIDI 48 (C3)
   [PIANO_PROFILE_NAMES.SPINET]: MIDI_A0 + 29,        // MIDI 50 (D3)
+  [PIANO_PROFILE_NAMES.OTHER]: MIDI_A0 + 26,         // MIDI 47 (B2) — same as upright baseline
 } as const;
 
 /** Sample notes for B measurement (MIDI note numbers). */

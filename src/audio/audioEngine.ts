@@ -146,19 +146,22 @@ export class AudioEngine {
 
     const now = this.ctx.currentTime;
 
-    // Cancel future automation, then use setTargetAtTime to smoothly
-    // ramp from current automated level to 0 — avoids reading .value
-    // which is unreliable during automation
-    tone.envelopeGain.gain.cancelScheduledValues(now);
-    tone.envelopeGain.gain.setTargetAtTime(
-      0,
-      now,
-      AUDIO_CONFIG.DAMPER_RELEASE_S / 4,
-    );
+    // Fade linearly to true zero over the damper-release window. Anchor at the
+    // current value first so cancelling the decay automation causes no jump, then
+    // ramp with a constant slope: an exponential release has a steep initial drop
+    // (most of the level gone in the first time constant) that the ear hears as a
+    // click, and it only approaches zero asymptotically so the hard oscillator
+    // stop can still catch a non-zero level. A linear ramp has no steep drop and
+    // lands on exactly 0, so the cutoff is silent.
+    const gain = tone.envelopeGain.gain;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    gain.linearRampToValueAtTime(0, now + AUDIO_CONFIG.DAMPER_RELEASE_S);
 
     const { oscillators, partialGains, envelopeGain } = tone;
 
-    const cleanupMs = AUDIO_CONFIG.DAMPER_RELEASE_S * 1000;
+    // Stop/disconnect only after the linear ramp has reached exactly 0.
+    const cleanupMs = AUDIO_CONFIG.DAMPER_RELEASE_S * 1000 + 40;
     setTimeout(() => {
       for (const osc of oscillators) {
         try { osc.stop(); } catch { /* already stopped */ }
@@ -168,7 +171,7 @@ export class AudioEngine {
         try { pg.disconnect(); } catch { /* already disconnected */ }
       }
       try { envelopeGain.disconnect(); } catch { /* already disconnected */ }
-    }, cleanupMs + 10);
+    }, cleanupMs);
 
     this.tones.delete(midiNote);
   }

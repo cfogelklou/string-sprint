@@ -40,7 +40,7 @@ export const AUDIO_CONFIG = {
   ATTACK_S: 0.005,
   RELEASE_S: 0.05,
   /** Damper release time in seconds — how fast the sound fades when key is released. */
-  DAMPER_RELEASE_S: 0.200,
+  DAMPER_RELEASE_S: 0.4,
   /** Double-decay: prompt sound amplitude level (-14dB). Fast vertical vibration drop. */
   PROMPT_LEVEL: 0.2,
   /** Double-decay: fraction of t60 spent in prompt decay. */

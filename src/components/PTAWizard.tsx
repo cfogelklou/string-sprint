@@ -121,7 +121,7 @@ export default function PTAWizard() {
           }} />
 
           <div style={{ flex: 1, fontWeight: 600, fontSize: 16 }}>
-            PTA Test
+            Calibration Test
           </div>
 
           {/* Step dots */}

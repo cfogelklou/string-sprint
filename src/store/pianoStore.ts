@@ -14,6 +14,7 @@ import {
   TUNING_SIM_CENTS_RANGE,
 } from '@/types';
 import { PIANO_B_PROFILES } from '@/bCoefficients/profiles';
+import type { HelpSectionId } from '@/components/helpContent';
 import { generateProfile, DEFAULT_RIGAUD_PARAMS } from '@/bCoefficients/rigaud';
 import { generate88Keys, midiToFreq } from '@/model/pianoNotes';
 import { computeTargets, computeResults } from '@/tuning/stretchTargets';
@@ -60,6 +61,8 @@ interface PianoState {
 
   // UI state
   isBCurveEditorOpen: boolean;
+  isHelpOpen: boolean;
+  helpInitialSection: HelpSectionId | null;
 }
 
 const DEFAULT_STRETCH_STRATEGY: StretchStrategy = { kind: 'equal' };
@@ -85,6 +88,8 @@ const DEFAULT_PIANO_STATE: PianoState = {
   tuningSimTargetMidi: null,
   tuningSimCompleted: new Set(),
   isBCurveEditorOpen: false,
+  isHelpOpen: false,
+  helpInitialSection: null,
 };
 
 // ---------------------------------------------------------------------------
@@ -105,6 +110,8 @@ interface PianoActions {
   setCustomParam: (key: keyof RigaudParams, value: number) => void;
   setUseCustomProfile: (use: boolean) => void;
   toggleBCurveEditor: () => void;
+  openHelp: (section?: HelpSectionId) => void;
+  closeHelp: () => void;
   startTuningSim: () => void;
   stopTuningSim: () => void;
   commitNote: (midi: number) => void;
@@ -267,6 +274,14 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
 
   toggleBCurveEditor: () => {
     set((s) => ({ isBCurveEditorOpen: !s.isBCurveEditorOpen }));
+  },
+
+  openHelp: (section) => {
+    set({ isHelpOpen: true, helpInitialSection: section ?? null });
+  },
+
+  closeHelp: () => {
+    set({ isHelpOpen: false, helpInitialSection: null });
   },
 
   // ---------------------------------------------------------------------------

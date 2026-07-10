@@ -3,6 +3,7 @@ import { usePianoStore } from '@/store/pianoStore';
 import { useAudioEngine } from '@/hooks/useAudioEngine';
 import VirtualKeyboard from '@/components/VirtualKeyboard';
 import KeyboardMinimap from '@/components/KeyboardMinimap';
+import HelpSheet from '@/components/HelpSheet';
 import NoteSelector from '@/components/NoteSelector';
 import CentsJogWheel from '@/components/CentsJogWheel';
 import ProfilePicker from '@/components/ProfilePicker';
@@ -24,6 +25,7 @@ export default function App() {
   const resetTuning = usePianoStore((s) => s.resetTuning);
   const toggleBCurveEditor = usePianoStore((s) => s.toggleBCurveEditor);
   const setMasterVolume = usePianoStore((s) => s.setMasterVolume);
+  const openHelp = usePianoStore((s) => s.openHelp);
 
   const infiniteSustain = usePianoStore((s) => s.infiniteSustain);
   const setInfiniteSustain = usePianoStore((s) => s.setInfiniteSustain);
@@ -130,6 +132,15 @@ export default function App() {
         >
           B Curve
         </button>
+        <button
+          onClick={() => openHelp()}
+          className="controls-bar-btn"
+          aria-label="Help"
+          title="Help"
+          style={{ minWidth: 28, padding: '5px 8px' }}
+        >
+          ?
+        </button>
       </section>
 
       {/* Tuning sim area */}
@@ -151,6 +162,9 @@ export default function App() {
 
       {/* B Curve editor overlay */}
       <BCurveEditor />
+
+      {/* Help overlay */}
+      <HelpSheet />
 
       {/* PTA wizard overlay */}
       {ptaActive && <PTAWizard />}

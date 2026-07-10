@@ -90,6 +90,7 @@ html, body, #root {
 
 .controls-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 6px 12px;

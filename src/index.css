@@ -119,6 +119,34 @@ html, body, #root {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Visible, grabbable horizontal scrollbar for the keyboard */
+.keyboard-area,
+.keyboard-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(153, 153, 153, 0.6) var(--color-surface, #1e1e1e);
+}
+
+.keyboard-area::-webkit-scrollbar,
+.keyboard-scroll::-webkit-scrollbar {
+  height: 10px;
+}
+
+.keyboard-area::-webkit-scrollbar-track,
+.keyboard-scroll::-webkit-scrollbar-track {
+  background: var(--color-surface, #1e1e1e);
+}
+
+.keyboard-area::-webkit-scrollbar-thumb,
+.keyboard-scroll::-webkit-scrollbar-thumb {
+  background: rgba(153, 153, 153, 0.6);
+  border-radius: 5px;
+}
+
+.keyboard-area::-webkit-scrollbar-thumb:hover,
+.keyboard-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(153, 153, 153, 0.9);
+}
+
 /* ------------------------------------------------------------------ */
 /* Audio start overlay                                                 */
 /* ------------------------------------------------------------------ */

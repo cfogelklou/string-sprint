@@ -11,9 +11,9 @@ const D1_MIDI = 26;
 const STEP_MS = 2000;
 /** ms each note is held before it is released (must be < STEP_MS so there is a
  *  gap — the release fade — before the next note attacks). */
-const GATE_MS = 1600;
+const GATE_MS = 1800;
 /** ms the final note is held before release (held longer for a musical close). */
-const LAST_HOLD_MS = 1800;
+const LAST_HOLD_MS = 2800;
 
 const VARIANT_D1 = { label: 'Bassline D1', offset: 0 } as const;
 const VARIANT_A0 = {

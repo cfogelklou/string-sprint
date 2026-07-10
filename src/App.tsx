@@ -3,6 +3,7 @@ import { usePianoStore } from '@/store/pianoStore';
 import { useAudioEngine } from '@/hooks/useAudioEngine';
 import VirtualKeyboard from '@/components/VirtualKeyboard';
 import KeyboardMinimap from '@/components/KeyboardMinimap';
+import BasslineControls from '@/components/BasslineControls';
 import HelpSheet from '@/components/HelpSheet';
 import NoteSelector from '@/components/NoteSelector';
 import CentsJogWheel from '@/components/CentsJogWheel';
@@ -159,6 +160,9 @@ export default function App() {
       <div className="keyboard-area" data-testid="keyboard-area">
         <VirtualKeyboard />
       </div>
+
+      {/* Bassline buttons */}
+      <BasslineControls />
 
       {/* B Curve editor overlay */}
       <BCurveEditor />

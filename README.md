@@ -64,7 +64,7 @@ When you first open the app, you see a **START AUDIO** button. Browsers require 
 
 | Element | Description |
 |---------|-------------|
-| **Profile Picker** (dropdown) | Select one of 6 piano B-coefficient profiles. Both devices should use the same profile for accurate testing. |
+| **Profile Picker** (dropdown) | Select one of 8 piano B-coefficient profiles. Both devices should use the same profile for accurate testing. |
 | **Volume slider** | Master output volume (0–100%). |
 
 ### Note Info Panel
@@ -87,7 +87,7 @@ A horizontal drag area for fine-tuning the selected note's cents offset (−100 
 - **Release with momentum** — inertial scrolling decays with friction.
 - **Haptic feedback** — a short vibration each time a whole-cent boundary is crossed (on supported devices).
 - **Reset button** (right side) — snaps back to 0.0¢.
-- Display turns **blue** when within ±0.1¢ (effectively in tune).
+- Display turns **green** when within ±0.1¢ (effectively in tune).
 
 > **"Select a key to tune"** appears when no key is selected.
 
@@ -100,24 +100,25 @@ A horizontal drag area for fine-tuning the selected note's cents offset (−100 
 
 ### Tuning Simulation Panel
 
-The game mode — simulates the process of tuning a real piano.
+An ear-training game. Every key gets a random detune (±50¢); the goal is to bring each note back to a flat 0.0¢ target (equal temperament, no stretch), using a second device running Strobopro to read the error.
 
 | Button | Description |
 |--------|-------------|
-| **Tuning Sim** | Enables simulation mode. All 88 keys get randomized cents offsets (±50¢). Button turns red and relabels to "Stop Sim". |
-| **Stop Sim** | Disables simulation, resets all offsets to 0. |
-| **Randomize** | Re-randomizes all offsets (only visible in sim mode). |
-| **Reset** | Sets all offsets to 0 without exiting sim mode (only visible in sim mode). |
-| **X/88 tuned** | Progress counter. A key counts as "tuned" when its cents offset is within ±0.5¢. Turns blue when all 88 are tuned. |
+| **Tuning Practice** | Starts the game. All 88 keys get randomized cents offsets (±50¢). The panel swaps to the in-game bar (Commit / Reveal Results / Randomize / Stop). |
+| **Commit** | Locks in the selected key's current offset and marks it done (green ✓). |
+| **Reveal Results** | Ends the game and grades your accuracy (A+ to F). |
+| **Randomize** | Re-randomizes only uncommitted notes. |
+| **Stop** | Exits the game and resets all offsets to 0. |
+| **X/88 committed** | Progress counter — how many keys you have committed. |
 
-#### How to Play the Tuning Simulation
+#### How to Play Tuning Practice
 
-1. Tap **Tuning Sim** — all notes get random detuning.
+1. Tap **Tuning Practice** — all notes get random detuning.
 2. On a second device running Strobopro, hold a note on Fake Piano.
 3. Strobopro shows the cents error for that note.
 4. Use the **Cents Jog Wheel** to bring the offset to 0.0¢ — Strobopro's strobe pattern will slow and stop.
-5. Release the key, move to the next note, repeat.
-6. Goal: tune all 88 notes. Progress counter tracks how many are within ±0.5¢.
+5. Tap **Commit**, move to the next note, repeat.
+6. When done, tap **Reveal Results** for a grade.
 
 ### Keyboard Minimap
 
@@ -138,7 +139,7 @@ A scrollable 88-key piano (A0–C8). All **A** keys are labeled (A0, A1, ... A7)
 A bottom sheet (slide-up drawer) showing the inharmonicity curve across all 88 keys.
 
 - **Canvas chart** — log-scale B values from A0 to C8.
-- **Profile selector** — switch between the 6 preset profiles.
+- **Profile selector** — switch between the 8 preset profiles.
 - **Custom mode** — toggle to "Custom" to edit Rigaud model parameters directly:
   - `s_B` — body exponent
   - `y_B` — body offset
@@ -148,7 +149,7 @@ A bottom sheet (slide-up drawer) showing the inharmonicity curve across all 88 k
 
 ## B Profiles
 
-Six preset inharmonicity profiles copied from Strobopro, measured from real pianos:
+Eight preset inharmonicity profiles copied from Strobopro, measured from real pianos:
 
 | Profile | Description |
 |---------|-------------|
@@ -158,6 +159,8 @@ Six preset inharmonicity profiles copied from Strobopro, measured from real pian
 | Upright | Default. Typical vertical piano characteristics. |
 | Console | Compact upright, higher B across the range. |
 | Spinet | Highest inharmonicity. Shortest strings. |
+| Other | Same curve as Upright (generic fallback). |
+| Ideal | Zero inharmonicity (B = 0) — a clean reference with no stretch. |
 
 ## Technical Details
 

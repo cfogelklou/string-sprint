@@ -36,7 +36,7 @@ export default function TuningSimGameBar() {
       borderRadius: 8,
       flexWrap: 'wrap',
     }}>
-      <span style={{ fontSize: 12, color: 'var(--color-text-dim)' }}>Equal Tuning Sim</span>
+      <span style={{ fontSize: 12, color: 'var(--color-text-dim)' }}>Tuning Practice</span>
       <span style={{ fontSize: 12, fontWeight: 600 }}>
         {committedCount}/{NUM_KEYS} committed
       </span>

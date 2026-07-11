@@ -33,7 +33,7 @@ html, body, #root {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: auto auto auto auto 10px minmax(45vh, 1fr) auto;
+  grid-template-rows: auto auto auto auto 10px minmax(120px, 1fr) auto;
   grid-template-columns: 1fr;
   overflow: hidden;
 }
@@ -221,4 +221,10 @@ html, body, #root {
 /* Game mode: always show tuning sim area */
 .tuning-sim-area.active {
   display: flex !important;
+}
+
+@media (max-height: 500px) {
+  .ad-banner-wrapper {
+    display: none !important;
+  }
 }

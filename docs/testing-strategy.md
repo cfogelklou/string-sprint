@@ -89,4 +89,4 @@ Array index = midi - 21 (MIDI_A0).
 | 4:2 | 4 | 2 | 12 (octave) | Standard stretch, aligns 4th partial with 2nd |
 | 6:3 | 6 | 3 | 12 (octave) | Wider stretch, aligns 6th partial with 3rd |
 | Pure 12ths | 3 | 1 | 19 (octave+fifth) | Widest stretch, aligns 3rd partial with fundamental of note 19 semitones up |
-| Concert Grand | 4:2 or 6:3 | 2 or 3 | 12 | Hybrid: 6:3 below bridge break, 4:2 above |
+| Mixed 6:3 / 4:2 | 4:2 or 6:3 | 2 or 3 | 12 | Hybrid: 6:3 below bridge break, 4:2 above |

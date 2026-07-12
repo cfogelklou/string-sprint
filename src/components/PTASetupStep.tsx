@@ -19,7 +19,7 @@ const OCTAVE_STYLES: { value: OctaveStyle; label: string }[] = [
   { value: '4:2', label: '4:2' },
   { value: '6:3', label: '6:3' },
   { value: 'pure-12ths', label: 'Pure 12ths' },
-  { value: 'concert-grand', label: 'Concert Grand' },
+  { value: 'concert-grand', label: 'Mixed 6:3 / 4:2' },
 ];
 
 const REF_FREQ_PRESETS = [440, 442, 443];

@@ -1,8 +1,15 @@
 import { useRef, useEffect } from 'react';
 import { usePTAStore } from '@/store/ptaStore';
-import { MIDI_A0, NUM_KEYS } from '@/types';
+import { MIDI_A0, NUM_KEYS, type OctaveStyle } from '@/types';
 import { midiToNoteName } from '@/model/pianoNotes';
 import { PROFILE_LABELS } from '@/bCoefficients/profiles';
+
+const OCTAVE_STYLE_LABELS: Record<OctaveStyle, string> = {
+  '4:2': '4:2',
+  '6:3': '6:3',
+  'pure-12ths': 'Pure 12ths',
+  'concert-grand': 'Mixed 6:3 / 4:2',
+};
 
 function drawCurve(
   canvas: HTMLCanvasElement,
@@ -104,7 +111,7 @@ export default function PTAReviewStep() {
       drawCurve(
         canvasRef.current,
         ptaState.stretchCurve,
-        `Stretch Curve (${ptaState.octaveStyle}) — cents`,
+        `Stretch Curve (${OCTAVE_STYLE_LABELS[ptaState.octaveStyle]}) — cents`,
       );
     }
   }, [ptaState.stretchCurve, ptaState.octaveStyle]);
@@ -128,7 +135,7 @@ export default function PTAReviewStep() {
           <span style={{ color: 'var(--color-text-dim)' }}>Piano</span>
           <span>{PROFILE_LABELS[ptaState.pianoType]}</span>
           <span style={{ color: 'var(--color-text-dim)' }}>Octave style</span>
-          <span>{ptaState.octaveStyle}</span>
+          <span>{OCTAVE_STYLE_LABELS[ptaState.octaveStyle]}</span>
           <span style={{ color: 'var(--color-text-dim)' }}>Bridge break</span>
           <span>{midiToNoteName(ptaState.bridgeBreakNote)}</span>
           <span style={{ color: 'var(--color-text-dim)' }}>Notes measured</span>

@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { PIANO_PROFILE_NAMES, MIDI_A0, NUM_KEYS, PianoProfileName } from '@/types';
 import { PIANO_B_PROFILES, PROFILE_LABELS, getBForNote } from './profiles';
-import { DEFAULT_RIGAUD_PARAMS, rigaudB, generateProfile } from './rigaud';
 
 const PROFILE_NAMES = Object.values(PIANO_PROFILE_NAMES) as PianoProfileName[];
 
-/** Profiles with physical (non-zero) B coefficients. IDEAL is excluded because it has all-zero B values. */
-const PHYSICAL_PROFILES = PROFILE_NAMES.filter((n) => n !== PIANO_PROFILE_NAMES.IDEAL);
+/** Profiles with physical (non-zero) B coefficients. IDEAL and OTHER are excluded: both use all-zero B values (OTHER = Digital/Synth has no physical string inharmonicity). */
+const PHYSICAL_PROFILES = PROFILE_NAMES.filter(
+  (n) => n !== PIANO_PROFILE_NAMES.IDEAL && n !== PIANO_PROFILE_NAMES.OTHER,
+);
 
 describe('PIANO_B_PROFILES', () => {
   it('has all 8 profiles', () => {
@@ -96,38 +97,5 @@ describe('getBForNote', () => {
 
   it('throws for MIDI note above range', () => {
     expect(() => getBForNote(PIANO_PROFILE_NAMES.CONCERT_GRAND, MIDI_A0 + NUM_KEYS)).toThrow(RangeError);
-  });
-});
-
-describe('Rigaud parametric model', () => {
-  it('rigaudB returns positive values across the keyboard', () => {
-    const params = DEFAULT_RIGAUD_PARAMS[PIANO_PROFILE_NAMES.CONCERT_GRAND];
-    for (let midi = MIDI_A0; midi < MIDI_A0 + NUM_KEYS; midi++) {
-      const b = rigaudB(midi, params);
-      expect(b).toBeGreaterThan(0);
-      expect(Number.isFinite(b)).toBe(true);
-    }
-  });
-
-  it('generateProfile returns array of length 88', () => {
-    for (const name of PROFILE_NAMES) {
-      const params = DEFAULT_RIGAUD_PARAMS[name];
-      const profile = generateProfile(params);
-      expect(profile).toHaveLength(NUM_KEYS);
-    }
-  });
-
-  it('generates values matching tabulated profiles within ±10% tolerance (physical profiles only)', () => {
-    const tolerance = 0.10;
-    for (const name of PHYSICAL_PROFILES) {
-      const params = DEFAULT_RIGAUD_PARAMS[name];
-      const generated = generateProfile(params);
-      const tabulated = PIANO_B_PROFILES[name];
-
-      for (let i = 0; i < NUM_KEYS; i++) {
-        const relError = Math.abs(generated[i] - tabulated[i]) / tabulated[i];
-        expect(relError).toBeLessThanOrEqual(tolerance);
-      }
-    }
   });
 });

@@ -34,7 +34,7 @@ const CRAZY_STROBE_TONE: ToneConfig = {
   manualPartials: [
     { freq: 110, amp: 1.0 / 6 },
     { freq: 218, amp: 1.0 / 6 },
-    { freq: 322, amp: 1.0 / 6 },
+    { freq: 332, amp: 1.0 / 6 },
     { freq: 438, amp: 1.0 / 6 },
     { freq: 552, amp: 1.0 / 6 },
     { freq: 658, amp: 1.0 / 6 },

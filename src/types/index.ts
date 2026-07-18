@@ -70,6 +70,8 @@ export interface ToneConfig {
   centsOffset: number;
   numPartials: number;
   sustainDuration: number;
+  infiniteSustain?: boolean;
+  manualPartials?: Array<{ freq: number; amp: number }>;
 }
 
 // ---------------------------------------------------------------------------

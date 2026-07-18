@@ -64,7 +64,8 @@ export default function App() {
     // Play tones that are in store but not in engine
     for (const [midi, config] of activeTones) {
       if (!engine.isToneActive(midi)) {
-        engine.playTone(midi, config, sustain);
+        const useSustain = config.infiniteSustain !== undefined ? config.infiniteSustain : sustain;
+        engine.playTone(midi, config, useSustain);
       }
     }
     // Stop tones that are in engine but not in store

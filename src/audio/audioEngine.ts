@@ -75,25 +75,43 @@ export class AudioEngine {
     const oscillators: OscillatorNode[] = [];
     const partialGains: GainNode[] = [];
 
-    const numPartials = Math.min(config.numPartials, AUDIO_CONFIG.MAX_PARTIALS);
+    if (config.manualPartials) {
+      for (const p of config.manualPartials) {
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = p.freq;
 
-    for (let n = 1; n <= numPartials; n++) {
-      const freq = partialFreq(config.frequency, config.B, n) * centsRatio;
-      const amp = partialAmplitude(n);
+        const partialGain = this.ctx.createGain();
+        partialGain.gain.value = p.amp;
 
-      const osc = this.ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
+        osc.connect(partialGain);
+        partialGain.connect(envelopeGain);
 
-      const partialGain = this.ctx.createGain();
-      partialGain.gain.value = amp;
+        osc.start(now);
+        oscillators.push(osc);
+        partialGains.push(partialGain);
+      }
+    } else {
+      const numPartials = Math.min(config.numPartials, AUDIO_CONFIG.MAX_PARTIALS);
 
-      osc.connect(partialGain);
-      partialGain.connect(envelopeGain);
+      for (let n = 1; n <= numPartials; n++) {
+        const freq = partialFreq(config.frequency, config.B, n) * centsRatio;
+        const amp = partialAmplitude(n);
 
-      osc.start(now);
-      oscillators.push(osc);
-      partialGains.push(partialGain);
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+
+        const partialGain = this.ctx.createGain();
+        partialGain.gain.value = amp;
+
+        osc.connect(partialGain);
+        partialGain.connect(envelopeGain);
+
+        osc.start(now);
+        oscillators.push(osc);
+        partialGains.push(partialGain);
+      }
     }
 
     let cleanupTimeout: ReturnType<typeof setTimeout> | null = null;

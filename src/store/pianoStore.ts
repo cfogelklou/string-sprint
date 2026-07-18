@@ -101,6 +101,7 @@ interface PianoActions {
   setProfile: (name: PianoProfileName) => void;
   selectKey: (midi: number | null) => void;
   playNote: (midi: number) => void;
+  playCustomTone: (midi: number, config: ToneConfig) => void;
   stopNote: (midi: number) => void;
   stopAll: () => void;
   setCentsOffset: (midi: number, cents: number) => void;
@@ -205,6 +206,11 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
 
     // Monophonic: stop any existing tone, play only the new one
     set({ activeTones: new Map([[midi, tone]]) });
+  },
+
+  playCustomTone: (midi: number, config: ToneConfig) => {
+    // Monophonic: stop any existing tone, play only the new one
+    set({ activeTones: new Map([[midi, config]]) });
   },
 
   stopNote: (midi: number) => {

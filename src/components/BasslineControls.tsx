@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
-import { MIDI_A0 } from '@/types';
+import { MIDI_A0, ToneConfig } from '@/types';
 
 /** Bassline sequence in the D1 key: D2 C2 B1 F1 G1 D#1 D1 (last note = D1). */
 const BASSLINE_BASE = [38, 36, 35, 29, 31, 27, 26];
@@ -23,9 +23,29 @@ const VARIANT_A0 = {
 } as const;
 const VARIANTS = [VARIANT_D1, VARIANT_A0] as const;
 
+const CRAZY_STROBE_MIDI = 9999;
+const CRAZY_STROBE_TONE: ToneConfig = {
+  frequency: 110,
+  B: 0,
+  centsOffset: 0,
+  numPartials: 6,
+  sustainDuration: 2.0,
+  infiniteSustain: true,
+  manualPartials: [
+    { freq: 110, amp: 1.0 / 6 },
+    { freq: 218, amp: 1.0 / 6 },
+    { freq: 322, amp: 1.0 / 6 },
+    { freq: 438, amp: 1.0 / 6 },
+    { freq: 552, amp: 1.0 / 6 },
+    { freq: 658, amp: 1.0 / 6 },
+  ],
+};
+
 export default function BasslineControls() {
   const playNote = usePianoStore((s) => s.playNote);
+  const playCustomTone = usePianoStore((s) => s.playCustomTone);
   const stopNote = usePianoStore((s) => s.stopNote);
+  const activeTones = usePianoStore((s) => s.activeTones);
 
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,6 +119,17 @@ export default function BasslineControls() {
     }
   };
 
+  const isCrazyStrobeActive = activeTones.has(CRAZY_STROBE_MIDI);
+
+  const toggleCrazyStrobe = () => {
+    if (isCrazyStrobeActive) {
+      stopNote(CRAZY_STROBE_MIDI);
+    } else {
+      stop();
+      playCustomTone(CRAZY_STROBE_MIDI, CRAZY_STROBE_TONE);
+    }
+  };
+
   return (
     <div
       style={{
@@ -122,6 +153,13 @@ export default function BasslineControls() {
           </button>
         );
       })}
+      <button
+        onClick={toggleCrazyStrobe}
+        className={`controls-bar-btn${isCrazyStrobeActive ? ' active' : ''}`}
+        style={{ flex: 1, padding: '8px 12px', fontSize: 13, fontWeight: 600 }}
+      >
+        {isCrazyStrobeActive ? '■ Stop Crazy Strobe Test' : '▶ Crazy Strobe Test'}
+      </button>
     </div>
   );
 }

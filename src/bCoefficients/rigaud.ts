@@ -1,4 +1,5 @@
-import { PianoProfileName, RigaudParams, PIANO_PROFILE_NAMES, MIDI_A0, NUM_KEYS } from '@/types';
+import { PianoProfileName, RigaudParams, PIANO_PROFILE_NAMES, MIDI_A0, MIDI_C8 } from '@/types';
+import { withSubA0Plateau } from '@/bCoefficients/profiles';
 
 export const DEFAULT_RIGAUD_PARAMS: Record<PianoProfileName, RigaudParams> = {
   [PIANO_PROFILE_NAMES.CONCERT_GRAND]: { s_B: -0.150, y_B: -5.00, s_T: 0.0926, y_T: -15.5223 },
@@ -17,10 +18,12 @@ export function rigaudB(midiNote: number, params: RigaudParams): number {
 }
 
 export function generateProfile(params: RigaudParams): number[] {
-  const result: number[] = [];
-  for (let i = 0; i < NUM_KEYS; i++) {
-    const midiNote = MIDI_A0 + i;
-    result.push(rigaudB(midiNote, params));
+  // Generate the theoretical model only for real keys A0..C8 (the Rigaud
+  // dual-exponential is not valid below A0 — CLAUDE.md B-coefficient rule),
+  // then share the empirical-table plateau helper for the sub-A0 keys.
+  const raw: number[] = [];
+  for (let midiNote = MIDI_A0; midiNote <= MIDI_C8; midiNote++) {
+    raw.push(rigaudB(midiNote, params));
   }
-  return result;
+  return withSubA0Plateau(raw);
 }

@@ -1,9 +1,10 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
 import { PROFILE_LABELS } from '@/bCoefficients/profiles';
-import { PianoProfileName, PIANO_PROFILE_NAMES, MIDI_A0, MIDI_C8, RigaudParams } from '@/types';
+import { PianoProfileName, PIANO_PROFILE_NAMES, MIDI_LOWEST, MIDI_C8, RigaudParams } from '@/types';
 import { generateProfile } from '@/bCoefficients/rigaud';
 import { PIANO_B_PROFILES } from '@/bCoefficients/profiles';
+import { midiAtIndex } from '@/model/pianoNotes';
 
 const PROFILE_KEYS: PianoProfileName[] = Object.values(PIANO_PROFILE_NAMES);
 const PADDING = { top: 20, right: 16, bottom: 30, left: 50 };
@@ -34,7 +35,7 @@ function drawChart(
   const logMin = Math.log10(minB);
   const logMax = Math.log10(maxB);
 
-  const toX = (midi: number) => PADDING.left + ((midi - MIDI_A0) / (MIDI_C8 - MIDI_A0)) * plotW;
+  const toX = (midi: number) => PADDING.left + ((midi - MIDI_LOWEST) / (MIDI_C8 - MIDI_LOWEST)) * plotW;
   const toY = (b: number) => {
     const logVal = Math.log10(Math.max(minB, Math.min(maxB, b)));
     return PADDING.top + plotH - ((logVal - logMin) / (logMax - logMin)) * plotH;
@@ -58,11 +59,11 @@ function drawChart(
     ctx.fillText(`1e${exp}`, PADDING.left - 6, y + 3);
   }
 
-  // X axis labels
+  // X axis labels (octave C marks within the key range)
   ctx.fillStyle = 'rgba(255,255,255,0.3)';
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'center';
-  for (let midi = 24; midi <= 108; midi += 12) {
+  for (let midi = 12; midi <= MIDI_C8; midi += 12) {
     const x = toX(midi);
     ctx.fillText(`M${midi}`, x, h - 6);
   }
@@ -72,7 +73,7 @@ function drawChart(
   ctx.lineWidth = 2;
   ctx.beginPath();
   for (let i = 0; i < bProfile.length; i++) {
-    const midi = MIDI_A0 + i;
+    const midi = midiAtIndex(i);
     const x = toX(midi);
     const y = toY(bProfile[i]);
     if (i === 0) ctx.moveTo(x, y);

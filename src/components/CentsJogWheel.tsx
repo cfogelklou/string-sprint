@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
-import { MIDI_A0 } from '@/types';
+import { keyIndexOf } from '@/model/pianoNotes';
 
 const SENSITIVITY = 10; // px per cent
 const FRICTION = 0.95;
@@ -19,7 +19,7 @@ export default function CentsJogWheel() {
   const playNote = usePianoStore((s) => s.playNote);
   const stopNote = usePianoStore((s) => s.stopNote);
 
-  const keyIndex = selectedKeyId !== null ? selectedKeyId - MIDI_A0 : -1;
+  const keyIndex = selectedKeyId !== null ? keyIndexOf(selectedKeyId) : -1;
   const currentCents = keyIndex >= 0 && keyIndex < keys.length ? keys[keyIndex].centsOffset : 0;
 
   const [localCents, setLocalCents] = useState(currentCents);

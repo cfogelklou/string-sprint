@@ -95,7 +95,7 @@ A horizontal drag area for fine-tuning the selected note's cents offset (−100 
 
 | Button | Description |
 |--------|-------------|
-| **Reset Tuning** | Sets all 88 keys' cents offsets back to 0. |
+| **Reset Tuning** | Sets all 100 keys' cents offsets back to 0. |
 | **B Curve** | Opens the B Curve Editor bottom sheet. |
 
 ### Tuning Simulation Panel
@@ -104,12 +104,12 @@ An ear-training game. Every key gets a random detune (±50¢); the goal is to br
 
 | Button | Description |
 |--------|-------------|
-| **Tuning Practice** | Starts the game. All 88 keys get randomized cents offsets (±50¢). The panel swaps to the in-game bar (Commit / Reveal Results / Randomize / Stop). |
+| **Tuning Practice** | Starts the game. All 100 keys get randomized cents offsets (±50¢). The panel swaps to the in-game bar (Commit / Reveal Results / Randomize / Stop). |
 | **Commit** | Locks in the selected key's current offset and marks it done (green ✓). |
 | **Reveal Results** | Ends the game and grades your accuracy (A+ to F). |
 | **Randomize** | Re-randomizes only uncommitted notes. |
 | **Stop** | Exits the game and resets all offsets to 0. |
-| **X/88 committed** | Progress counter — how many keys you have committed. |
+| **X/100 committed** | Progress counter — how many keys you have committed. |
 
 #### How to Play Tuning Practice
 
@@ -126,7 +126,7 @@ A thin navigation strip above the keyboard. Tap any position to jump the keyboar
 
 ### Virtual Keyboard
 
-A scrollable 88-key piano (A0–C8). All **A** keys are labeled (A0, A1, ... A7) as octave reference markers.
+A scrollable 100-key piano (A-1–C8, extending below the standard 88-key range for ultra-low tuning verification). All **A** keys are labeled (A-1, A0, A1, ... A7) as octave reference markers.
 
 - **Tap a key** — plays that note. Up to 4 simultaneous tones.
 - **Release** — note stops with a short fade-out to prevent clicks.
@@ -136,7 +136,7 @@ A scrollable 88-key piano (A0–C8). All **A** keys are labeled (A0, A1, ... A7)
 
 ### B Curve Editor
 
-A bottom sheet (slide-up drawer) showing the inharmonicity curve across all 88 keys.
+A bottom sheet (slide-up drawer) showing the inharmonicity curve across all 100 keys.
 
 - **Canvas chart** — log-scale B values from A0 to C8.
 - **Profile selector** — switch between the 8 preset profiles.

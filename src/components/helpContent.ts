@@ -78,7 +78,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: 'B Curve (inharmonicity)',
     body: [
       'Piano strings are stiff, so their upper harmonics (overtones) ring slightly sharp. This effect is called inharmonicity, and each note’s amount of it is its B coefficient.',
-      'The B Curve shows B across all 88 keys: long bass strings have low B, short treble strings have higher B. The exact relationship is fₙ = n·f₁·√((1+B·n²)/(1+B)), where fₙ is the n-th partial.',
+      'The B Curve shows B across all 100 keys: long bass strings have low B, short treble strings have higher B. The exact relationship is fₙ = n·f₁·√((1+B·n²)/(1+B)), where fₙ is the n-th partial.',
       'Open the B Curve editor to pick a preset piano profile, or switch to Custom mode to shape the curve yourself with the Rigaud model parameters.',
     ],
   },
@@ -104,7 +104,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: 'Profiles',
     body: [
       'A Profile is a complete B curve for a particular kind of piano. Fake Piano ships 8 presets copied from real pianos, from a large Concert Grand (low inharmonicity) to a small Spinet (high inharmonicity).',
-      'Changing the profile regenerates all 88 keys’ B values, so the tone and the calibration truth change together. Use the same profile on both devices when testing Strobopro.',
+      'Changing the profile regenerates all 100 keys’ B values, so the tone and the calibration truth change together. Use the same profile on both devices when testing Strobopro.',
     ],
   },
 ];

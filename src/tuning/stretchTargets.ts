@@ -1,7 +1,8 @@
 import { partialFreq } from '@/audio/partialFreq';
-import { midiToFreq } from '@/model/pianoNotes';
+import { midiToFreq, midiAtIndex, keyIndexOf } from '@/model/pianoNotes';
 import {
   MIDI_A0,
+  MIDI_LOWEST,
   NUM_KEYS,
   StretchStrategy,
   TuningSimResults,
@@ -15,9 +16,10 @@ import {
 // Journal of the Acoustical Society of America, 1938.
 // Values interpolated to 88 keys (A0=21 to C8=108).
 // Bass stretched flat, treble stretched sharp, crossing near C4.
+// Sub-A0 keys (MIDI 9-20) hold the A0 deviation as a plateau — no invented data.
 // ---------------------------------------------------------------------------
 
-const RAILSBACK_DEVIATION_CENTS: readonly number[] = [
+const RAILSBACK_A0_C8: readonly number[] = [
   // A0 (MIDI 21) through C8 (MIDI 108)
   // Based on Railsback (1938), Martin & Ward (1961) published measurements,
   // and Schuck & Young (1943) inharmonicity analysis.
@@ -35,13 +37,17 @@ const RAILSBACK_DEVIATION_CENTS: readonly number[] = [
    11.5,  11.8,  12.1,  12.4,  12.7,  13.0,  13.3,  13.5,
 ] as const;
 
+const RAILSBACK_DEVIATION_CENTS: readonly number[] = new Array(MIDI_A0 - MIDI_LOWEST)
+  .fill(RAILSBACK_A0_C8[0])
+  .concat(RAILSBACK_A0_C8);
+
 // ---------------------------------------------------------------------------
 // Compute stretch targets
 // ---------------------------------------------------------------------------
 
 /**
- * Compute 88 target cents offsets for the given stretch strategy.
- * Index 0 = A0 (MIDI 21), index 87 = C8 (MIDI 108).
+ * Compute NUM_KEYS target cents offsets for the given stretch strategy.
+ * Index 0 = A-1 (MIDI 9), index NUM_KEYS-1 = C8 (MIDI 108).
  */
 export function computeTargets(
   strategy: StretchStrategy,
@@ -57,9 +63,9 @@ export function computeTargets(
     case 'partial_align': {
       const targets: number[] = [];
       for (let i = 0; i < NUM_KEYS; i++) {
-        const midi = MIDI_A0 + i;
+        const midi = midiAtIndex(i);
         const nextOctave = midi + 12;
-        if (nextOctave > MIDI_A0 + NUM_KEYS - 1) {
+        if (nextOctave > MIDI_LOWEST + NUM_KEYS - 1) {
           // No note an octave above C8 — fall back to 0
           targets.push(0);
           continue;
@@ -101,7 +107,7 @@ export function computeResults(
   const notes: TuningSimNoteResult[] = [];
 
   for (const [midi, userCents] of userCommits) {
-    const idx = midi - MIDI_A0;
+    const idx = keyIndexOf(midi);
     if (idx < 0 || idx >= NUM_KEYS) continue;
     const targetCents = targets[idx];
     notes.push({

@@ -4,7 +4,6 @@ import {
   type OctaveStyle,
   type PTAStep,
   type PTASampleMeasurement,
-  MIDI_A0,
   PTA_BRIDGE_BREAK_DEFAULTS,
   PTA_SAMPLE_NOTES,
   B_INPUT_MIN,
@@ -13,6 +12,7 @@ import {
 import { PIANO_B_PROFILES } from '@/bCoefficients/profiles';
 import { usePianoStore } from './pianoStore';
 import { calculateRailsbackOffset, gradeSampleMeasurements } from '@/pta/ptaCalculations';
+import { keyIndexOf } from '@/model/pianoNotes';
 
 // ---------------------------------------------------------------------------
 // State shape
@@ -43,7 +43,7 @@ const DEFAULT_PTA_TYPE: PianoProfileName = 'upright';
 function createDefaultSamples(pianoType: PianoProfileName): PTASampleMeasurement[] {
   const profile = PIANO_B_PROFILES[pianoType];
   return PTA_SAMPLE_NOTES.map((note) => {
-    const idx = note.midi - MIDI_A0;
+    const idx = keyIndexOf(note.midi);
     return {
       noteName: note.name,
       midi: note.midi,

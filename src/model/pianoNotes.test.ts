@@ -3,12 +3,14 @@ import {
   midiToFreq,
   midiToNoteName,
   isBlackKey,
-  generate88Keys,
+  generateKeys,
+  keyIndexOf,
+  midiAtIndex,
   freqToMidi,
   freqToCents,
   NOTE_NAMES,
 } from './pianoNotes';
-import { MIDI_A0, MIDI_C8, NUM_KEYS, DEFAULT_A4 } from '@/types';
+import { MIDI_A0, MIDI_C8, MIDI_LOWEST, NUM_KEYS, DEFAULT_A4 } from '@/types';
 
 describe('midiToFreq', () => {
   it('returns 440 Hz for MIDI 69 (A4) with default tuning', () => {
@@ -17,6 +19,10 @@ describe('midiToFreq', () => {
 
   it('returns ~27.5 Hz for MIDI 21 (A0)', () => {
     expect(midiToFreq(MIDI_A0)).toBeCloseTo(27.5, 1);
+  });
+
+  it('returns ~13.75 Hz for MIDI 9 (A-1, lowest key)', () => {
+    expect(midiToFreq(MIDI_LOWEST)).toBeCloseTo(13.75, 2);
   });
 
   it('returns ~4186 Hz for MIDI 108 (C8)', () => {
@@ -31,6 +37,10 @@ describe('midiToFreq', () => {
 describe('midiToNoteName', () => {
   it('names MIDI 21 as A0', () => {
     expect(midiToNoteName(MIDI_A0)).toBe('A0');
+  });
+
+  it('names MIDI 9 as A-1 (lowest key)', () => {
+    expect(midiToNoteName(MIDI_LOWEST)).toBe('A-1');
   });
 
   it('names MIDI 69 as A4', () => {
@@ -68,17 +78,17 @@ describe('isBlackKey', () => {
   });
 });
 
-describe('generate88Keys', () => {
+describe('generateKeys', () => {
   const flatProfile = new Array(NUM_KEYS).fill(0.0001);
-  const keys = generate88Keys(flatProfile);
+  const keys = generateKeys(flatProfile);
 
-  it('returns exactly 88 keys', () => {
+  it('returns exactly NUM_KEYS keys', () => {
     expect(keys).toHaveLength(NUM_KEYS);
   });
 
-  it('starts at MIDI 21 (A0)', () => {
-    expect(keys[0].midiNote).toBe(MIDI_A0);
-    expect(keys[0].name).toBe('A0');
+  it('starts at MIDI 9 (A-1)', () => {
+    expect(keys[0].midiNote).toBe(MIDI_LOWEST);
+    expect(keys[0].name).toBe('A-1');
     expect(keys[0].isBlack).toBe(false);
   });
 
@@ -96,7 +106,7 @@ describe('generate88Keys', () => {
 
   it('assigns B values from the profile', () => {
     expect(keys[0].B).toBe(0.0001);
-    expect(keys[87].B).toBe(0.0001);
+    expect(keys[NUM_KEYS - 1].B).toBe(0.0001);
   });
 
   it('initializes centsOffset to 0', () => {
@@ -106,7 +116,29 @@ describe('generate88Keys', () => {
   });
 
   it('computes fundamentalFreq correctly for first key', () => {
-    expect(keys[0].fundamentalFreq).toBeCloseTo(midiToFreq(MIDI_A0), 10);
+    expect(keys[0].fundamentalFreq).toBeCloseTo(midiToFreq(MIDI_LOWEST), 10);
+  });
+});
+
+describe('keyIndexOf / midiAtIndex', () => {
+  it('round-trips every key in the range', () => {
+    for (let i = 0; i < NUM_KEYS; i++) {
+      expect(keyIndexOf(midiAtIndex(i))).toBe(i);
+      expect(midiAtIndex(keyIndexOf(midiAtIndex(i)))).toBe(midiAtIndex(i));
+    }
+  });
+
+  it('maps the range boundaries', () => {
+    expect(keyIndexOf(MIDI_LOWEST)).toBe(0);
+    expect(midiAtIndex(0)).toBe(MIDI_LOWEST);
+    expect(keyIndexOf(MIDI_C8)).toBe(NUM_KEYS - 1);
+    expect(midiAtIndex(NUM_KEYS - 1)).toBe(MIDI_C8);
+  });
+
+  it('keeps A0 at its MIDI value while its array index shifts', () => {
+    expect(MIDI_A0).toBe(21);
+    expect(keyIndexOf(MIDI_A0)).toBe(12);
+    expect(midiToNoteName(midiAtIndex(12))).toBe('A0');
   });
 });
 
@@ -115,8 +147,8 @@ describe('freqToMidi', () => {
     expect(freqToMidi(DEFAULT_A4)).toBe(69);
   });
 
-  it('round-trips with midiToFreq for all 88 keys', () => {
-    for (let midi = MIDI_A0; midi <= MIDI_C8; midi++) {
+  it('round-trips with midiToFreq for all keys', () => {
+    for (let midi = MIDI_LOWEST; midi <= MIDI_C8; midi++) {
       expect(freqToMidi(midiToFreq(midi))).toBe(midi);
     }
   });

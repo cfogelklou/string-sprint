@@ -1,12 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { getRegisterEnvelope, scheduleDecayEnvelope, TRAILING_SILENCE_S } from './envelope';
-import { AUDIO_CONFIG, REGISTER_ENVELOPE_TABLE } from '@/types/index';
+import { AUDIO_CONFIG, MIDI_LOWEST, REGISTER_ENVELOPE_TABLE } from '@/types/index';
 
 // ---------------------------------------------------------------------------
 // getRegisterEnvelope
 // ---------------------------------------------------------------------------
 
 describe('getRegisterEnvelope', () => {
+  it('returns bass decay for every sub-A0 note (MIDI 9-20)', () => {
+    for (let midi = MIDI_LOWEST; midi < 21; midi++) {
+      const env = getRegisterEnvelope(midi);
+      expect(env.t60).toBe(37);
+      expect(env.attackMs).toBe(0.004);
+    }
+  });
+
   it('returns correct entry for MIDI 21 (A0 — low bass)', () => {
     const env = getRegisterEnvelope(21);
     expect(env.t60).toBe(37);

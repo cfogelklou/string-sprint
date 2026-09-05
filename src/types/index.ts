@@ -2,9 +2,13 @@
 // MIDI constants
 // ---------------------------------------------------------------------------
 
+/** Pitch-sense constant: A0 is MIDI 21. Kept for anchors that mean the pitch A0. */
 export const MIDI_A0 = 21;
 export const MIDI_C8 = 108;
-export const NUM_KEYS = 88;
+/** Lowest playable key: A-1 (MIDI 9, 13.75 Hz) — array-base sense. */
+export const MIDI_LOWEST = 9;
+/** Derived key count: A-1 (9) through C8 (108). */
+export const NUM_KEYS = MIDI_C8 - MIDI_LOWEST + 1;
 export const DEFAULT_A4 = 440;
 
 // ---------------------------------------------------------------------------
@@ -56,7 +60,7 @@ export const AUDIO_CONFIG = {
  * Values from acoustic piano measurements (KTH, Askenfelt).
  */
 export const REGISTER_ENVELOPE_TABLE = [
-  { midiLo: 21, midiHi: 35,  t60: 37,   attackMs: 0.004 },  // Low bass A0-B1
+  { midiLo: 9,  midiHi: 35,  t60: 37,   attackMs: 0.004 },  // Low bass A-1-B1 (sub-A0 plateau decay)
   { midiLo: 36, midiHi: 47,  t60: 22,   attackMs: 0.003 },  // Mid bass C2-B2
   { midiLo: 48, midiHi: 59,  t60: 15,   attackMs: 0.002 },  // Tenor C3-B3
   { midiLo: 60, midiHi: 71,  t60: 11,   attackMs: 0.0015 }, // Midrange C4-B4

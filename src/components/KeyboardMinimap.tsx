@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
-import { MIDI_A0, NUM_KEYS } from '@/types';
-import { isBlackKey } from '@/model/pianoNotes';
+import { NUM_KEYS } from '@/types';
+import { isBlackKey, midiAtIndex } from '@/model/pianoNotes';
 
 interface KeyboardMinimapProps {
   onJumpToNote: (midi: number) => void;
@@ -26,7 +26,7 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
   let whiteCount = 0;
   const whiteIndices: Map<number, number> = new Map(); // midi -> white key index
   for (let i = 0; i < NUM_KEYS; i++) {
-    const midi = MIDI_A0 + i;
+    const midi = midiAtIndex(i);
     if (!isBlackKey(midi)) {
       whiteIndices.set(midi, whiteCount);
       whiteCount++;
@@ -85,7 +85,7 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
         const blacks: { midi: number; x: number }[] = [];
         let wc = 0;
         for (let i = 0; i < NUM_KEYS; i++) {
-          const midi = MIDI_A0 + i;
+          const midi = midiAtIndex(i);
           if (isBlackKey(midi)) {
             blacks.push({ midi, x: wc * whiteKeyW - blackKeyW / 2 });
           } else {

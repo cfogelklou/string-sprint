@@ -1,6 +1,6 @@
 import { usePTAStore } from '@/store/ptaStore';
-import { MIDI_A0 } from '@/types';
-import { midiToNoteName } from '@/model/pianoNotes';
+import { MIDI_A0, NUM_KEYS } from '@/types';
+import { midiToNoteName, keyIndexOf, midiAtIndex } from '@/model/pianoNotes';
 
 export default function PTABridgeBreakStep() {
   const { ptaState, ptaSetBridgeBreak } = usePTAStore();
@@ -44,7 +44,7 @@ export default function PTABridgeBreakStep() {
           {breakNoteName}
         </div>
         <div style={{ fontSize: 12, color: 'var(--color-text-dim)', marginTop: 4 }}>
-          MIDI note {ptaState.bridgeBreakNote} (key {ptaState.bridgeBreakNote - MIDI_A0 + 1} of 88)
+          MIDI note {ptaState.bridgeBreakNote} (key {keyIndexOf(ptaState.bridgeBreakNote) + 1} of {NUM_KEYS})
         </div>
 
         {/* Adjustable slider */}
@@ -72,8 +72,8 @@ export default function PTABridgeBreakStep() {
         borderRadius: 4,
         overflow: 'hidden',
       }}>
-        {Array.from({ length: 88 }, (_, i) => {
-          const midi = MIDI_A0 + i;
+        {Array.from({ length: NUM_KEYS }, (_, i) => {
+          const midi = midiAtIndex(i);
           const isBass = midi < ptaState.bridgeBreakNote;
           const isBreak = midi === ptaState.bridgeBreakNote;
           return (
@@ -86,7 +86,8 @@ export default function PTABridgeBreakStep() {
                   : isBass
                     ? 'rgba(255, 152, 0, 0.4)'
                     : 'rgba(66, 165, 245, 0.4)',
-                minWidth: 2,
+                // No minWidth: at 100 keys the row must shrink below 2px/key
+                // on 320px viewports or the treble end clips (overflow hidden).
               }}
               title={midiToNoteName(midi)}
             />

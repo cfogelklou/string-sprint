@@ -1,10 +1,8 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
-import { MIDI_A0, NUM_KEYS } from '@/types';
-import { midiToNoteName, isBlackKey } from '@/model/pianoNotes';
+import { midiToNoteName } from '@/model/pianoNotes';
+import { computeKeyLayout, WHITE_KEY_WIDTH, BLACK_KEY_WIDTH } from '@/model/keyLayout';
 
-const WHITE_KEY_WIDTH = 44;
-const BLACK_KEY_WIDTH = 28;
 const MIN_WHITE_HEIGHT = 100;
 const MIN_BLACK_HEIGHT = 60;
 
@@ -49,29 +47,7 @@ export default function VirtualKeyboard() {
   const isPlaying = tuningSimPhase === 'playing';
 
   // Build layout: positions for white keys and black keys
-  const whiteKeyPositions: { midi: number; x: number; index: number }[] = [];
-  const blackKeyPositions: { midi: number; x: number; whiteIndex: number }[] = [];
-
-  let whiteCount = 0;
-  for (let i = 0; i < NUM_KEYS; i++) {
-    const midi = MIDI_A0 + i;
-    if (!isBlackKey(midi)) {
-      whiteKeyPositions.push({ midi, x: whiteCount * WHITE_KEY_WIDTH, index: whiteCount });
-      whiteCount++;
-    }
-  }
-
-  // Black keys positioned between adjacent white keys
-  whiteCount = 0;
-  for (let i = 0; i < NUM_KEYS; i++) {
-    const midi = MIDI_A0 + i;
-    if (isBlackKey(midi)) {
-      const x = whiteCount * WHITE_KEY_WIDTH - BLACK_KEY_WIDTH / 2;
-      blackKeyPositions.push({ midi, x, whiteIndex: whiteCount });
-    } else {
-      whiteCount++;
-    }
-  }
+  const { whites: whiteKeyPositions, blacks: blackKeyPositions } = computeKeyLayout();
 
   const totalWidth = whiteKeyPositions.length * WHITE_KEY_WIDTH;
 
@@ -232,6 +208,7 @@ export default function VirtualKeyboard() {
           return (
             <div
               key={midi}
+              data-midi={midi}
               style={{
                 position: 'absolute',
                 left: x,
@@ -302,6 +279,7 @@ export default function VirtualKeyboard() {
           return (
             <div
               key={midi}
+              data-midi={midi}
               style={{
                 position: 'absolute',
                 left: x,

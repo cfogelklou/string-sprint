@@ -9,14 +9,13 @@ import {
   TuningSimResults,
   AUDIO_CONFIG,
   PIANO_PROFILE_NAMES,
-  MIDI_A0,
   NUM_KEYS,
   TUNING_SIM_CENTS_RANGE,
 } from '@/types';
 import { PIANO_B_PROFILES } from '@/bCoefficients/profiles';
 import type { HelpSectionId } from '@/components/helpContent';
 import { generateProfile, DEFAULT_RIGAUD_PARAMS } from '@/bCoefficients/rigaud';
-import { generate88Keys, midiToFreq } from '@/model/pianoNotes';
+import { generateKeys, midiToFreq, keyIndexOf } from '@/model/pianoNotes';
 import { computeTargets, computeResults } from '@/tuning/stretchTargets';
 
 // ---------------------------------------------------------------------------
@@ -76,7 +75,7 @@ const DEFAULT_PIANO_STATE: PianoState = {
   activeProfile: PIANO_PROFILE_NAMES.UPRIGHT,
   customParams: { ...DEFAULT_RIGAUD_PARAMS[PIANO_PROFILE_NAMES.UPRIGHT] },
   useCustomProfile: false,
-  keys: generate88Keys(PIANO_B_PROFILES[PIANO_PROFILE_NAMES.UPRIGHT]),
+  keys: generateKeys(PIANO_B_PROFILES[PIANO_PROFILE_NAMES.UPRIGHT]),
   selectedKeyId: null,
   activeTones: new Map(),
   infiniteSustain: false,
@@ -139,7 +138,7 @@ function regenerateKeys(
   for (const k of prevKeys) {
     offsets.set(k.midiNote, k.centsOffset);
   }
-  const fresh = generate88Keys(bProfile, a4);
+  const fresh = generateKeys(bProfile, a4);
   return fresh.map((k) => ({
     ...k,
     centsOffset: offsets.get(k.midiNote) ?? 0,
@@ -192,7 +191,7 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
 
   playNote: (midi: number) => {
     const { keys, numPartials, sustainDuration, referenceFreq } = get();
-    const keyIndex = midi - MIDI_A0;
+    const keyIndex = keyIndexOf(midi);
     const key = keys[keyIndex];
     if (!key) return;
 
@@ -227,7 +226,7 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
 
   setCentsOffset: (midi: number, cents: number) => {
     const { keys } = get();
-    const keyIndex = midi - MIDI_A0;
+    const keyIndex = keyIndexOf(midi);
     if (keyIndex < 0 || keyIndex >= NUM_KEYS) return;
     const nextKeys = [...keys];
     nextKeys[keyIndex] = { ...nextKeys[keyIndex], centsOffset: cents };
@@ -331,7 +330,7 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
 
   commitNote: (midi: number) => {
     const { keys, tuningSimCompleted, tuningSimUserCommits } = get();
-    const keyIndex = midi - MIDI_A0;
+    const keyIndex = keyIndexOf(midi);
     if (keyIndex < 0 || keyIndex >= NUM_KEYS) return;
 
     const centsOffset = keys[keyIndex].centsOffset;

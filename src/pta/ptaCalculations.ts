@@ -3,22 +3,23 @@
  *
  * Generates the "expected stretch curve" for the review step and scores
  * sample note measurements. All internal indexing uses 0-based array
- * indices (midi - MIDI_A0).
+ * indices (midi - MIDI_LOWEST, i.e. index 0 = A-1).
  *
  * What this does NOT do (that's strobopro's job):
- *   - Interpolate B coefficients from sparse measurements (we have all 88)
+ *   - Interpolate B coefficients from sparse measurements (we have all keys)
  *   - FFT-based B measurement (we already know the true B values)
  */
 
 import {
-  MIDI_A0,
   NUM_KEYS,
   OCTAVE_ALIGNMENTS,
+  PIANO_PROFILE_NAMES,
+  PTA_BRIDGE_BREAK_DEFAULTS,
   PTA_MEASUREMENT_GRADE_THRESHOLDS,
   type OctaveStyle,
   type PTASampleMeasurement,
 } from '@/types';
-import { midiToFreq } from '@/model/pianoNotes';
+import { midiToFreq, midiAtIndex, keyIndexOf } from '@/model/pianoNotes';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -28,7 +29,12 @@ import { midiToFreq } from '@/model/pianoNotes';
 const MIDI_A4 = 69;
 
 /** 0-based array index for A4. */
-const INDEX_A4 = MIDI_A4 - MIDI_A0; // 48
+const INDEX_A4 = keyIndexOf(MIDI_A4); // 60
+
+/** Default bridge break: MIDI 48 (C3, console default) — preserved from the
+ *  pre-extension default of array index 27 (= MIDI 48 on the old A0 base). */
+const DEFAULT_BRIDGE_BREAK_MIDI =
+  PTA_BRIDGE_BREAK_DEFAULTS[PIANO_PROFILE_NAMES.CONSOLE];
 
 // ---------------------------------------------------------------------------
 // Stretch Curve Generation
@@ -80,7 +86,7 @@ function solveForLowerFrequency(
 function getAlignment(
   arrayIndex: number,
   style: OctaveStyle,
-  bridgeBreakIndex: number = 27,
+  bridgeBreakIndex: number = keyIndexOf(DEFAULT_BRIDGE_BREAK_MIDI),
 ): OctaveAlignment {
   if (style === 'concert-grand') {
     // Below bridge break: use 6:3 (wider stretch for bass)
@@ -99,10 +105,10 @@ function getAlignment(
  * frequencies by aligning partials of notes one octave apart.
  * Used in the PTA review step to show "what strobopro's curve should look like."
  *
- * @param bValues - 88 B values from PIANO_B_PROFILES (index 0 = A0)
+ * @param bValues - B values from PIANO_B_PROFILES (index 0 = A-1)
  * @param octaveStyle - Which partial alignment to use
  * @param referenceFreq - Reference frequency for A4 (default 440 Hz)
- * @returns 88 cents offsets from equal temperament (index 0 = A0)
+ * @returns NUM_KEYS cents offsets from equal temperament (index 0 = A-1)
  */
 export function calculateRailsbackOffset(
   bValues: number[],
@@ -112,7 +118,7 @@ export function calculateRailsbackOffset(
 ): number[] {
   const centsOffset = new Array(NUM_KEYS).fill(0);
   const fStretched = new Array(NUM_KEYS).fill(0);
-  const bridgeBreakIndex = bridgeBreakMidi != null ? bridgeBreakMidi - MIDI_A0 : undefined;
+  const bridgeBreakIndex = bridgeBreakMidi != null ? keyIndexOf(bridgeBreakMidi) : undefined;
 
   // Initialize reference note A4
   fStretched[INDEX_A4] = referenceFreq;
@@ -124,7 +130,7 @@ export function calculateRailsbackOffset(
     const spanForStyle = alignment.semitoneSpan;
     const anchorIdx = i - spanForStyle;
     if (anchorIdx < 0 || fStretched[anchorIdx] === 0) {
-      fStretched[i] = midiToFreq(MIDI_A0 + i, referenceFreq);
+      fStretched[i] = midiToFreq(midiAtIndex(i), referenceFreq);
       centsOffset[i] = 0;
       continue;
     }
@@ -140,7 +146,7 @@ export function calculateRailsbackOffset(
       alignment,
     );
     fStretched[i] = fTarget;
-    const etFreq = midiToFreq(MIDI_A0 + i, referenceFreq);
+    const etFreq = midiToFreq(midiAtIndex(i), referenceFreq);
     centsOffset[i] = 1200 * Math.log2(fTarget / etFreq);
   }
 
@@ -150,7 +156,7 @@ export function calculateRailsbackOffset(
     const spanForStyle = alignment.semitoneSpan;
     const anchorIdx = i + spanForStyle;
     if (anchorIdx >= NUM_KEYS || fStretched[anchorIdx] === 0) {
-      fStretched[i] = midiToFreq(MIDI_A0 + i, referenceFreq);
+      fStretched[i] = midiToFreq(midiAtIndex(i), referenceFreq);
       centsOffset[i] = 0;
       continue;
     }
@@ -166,7 +172,7 @@ export function calculateRailsbackOffset(
       alignment,
     );
     fStretched[i] = fTarget;
-    const etFreq = midiToFreq(MIDI_A0 + i, referenceFreq);
+    const etFreq = midiToFreq(midiAtIndex(i), referenceFreq);
     centsOffset[i] = 1200 * Math.log2(fTarget / etFreq);
   }
 

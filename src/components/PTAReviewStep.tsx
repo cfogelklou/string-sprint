@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { usePTAStore } from '@/store/ptaStore';
-import { MIDI_A0, NUM_KEYS, type OctaveStyle } from '@/types';
-import { midiToNoteName } from '@/model/pianoNotes';
+import { NUM_KEYS, type OctaveStyle } from '@/types';
+import { midiToNoteName, midiAtIndex } from '@/model/pianoNotes';
 import { PROFILE_LABELS } from '@/bCoefficients/profiles';
 
 const OCTAVE_STYLE_LABELS: Record<OctaveStyle, string> = {
@@ -83,12 +83,12 @@ function drawCurve(
     ctx.fillText(val.toFixed(1), pad.left - 4, y + 3);
   }
 
-  // X-axis labels
+  // X-axis labels (quarter marks across the full key range)
   ctx.textAlign = 'center';
-  const xLabels = [0, 24, 48, 72, 87];
+  const xLabels = [0, Math.floor(NUM_KEYS / 4), NUM_KEYS / 2, (3 * NUM_KEYS) / 4, NUM_KEYS - 1];
   for (const idx of xLabels) {
     const x = pad.left + (idx / (values.length - 1)) * plotW;
-    ctx.fillText(midiToNoteName(MIDI_A0 + idx), x, h - 4);
+    ctx.fillText(midiToNoteName(midiAtIndex(idx)), x, h - 4);
   }
 
   // Title

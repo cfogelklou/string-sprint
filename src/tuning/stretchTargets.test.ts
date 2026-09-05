@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeTargets, computeResults } from '@/tuning/stretchTargets';
-import { MIDI_A0, NUM_KEYS } from '@/types';
+import { MIDI_LOWEST, NUM_KEYS } from '@/types';
 import { PIANO_B_PROFILES } from '@/bCoefficients/profiles';
 
 describe('computeTargets', () => {
@@ -12,19 +12,29 @@ describe('computeTargets', () => {
     expect(targets.every((t) => t === 0)).toBe(true);
   });
 
-  it('railsback strategy returns 88 values with correct shape', () => {
+  it('railsback strategy returns NUM_KEYS values with correct shape', () => {
     const targets = computeTargets({ kind: 'railsback' }, uprightB);
     expect(targets).toHaveLength(NUM_KEYS);
     // Bass should be flat (negative)
     expect(targets[0]).toBeLessThan(0);
     // Treble should be sharp (positive)
     expect(targets[NUM_KEYS - 1]).toBeGreaterThan(0);
-    // Crossing point near middle should be close to 0
-    const midIdx = 44; // roughly C4
+    // Crossing point near the temperament region should be close to 0
+    const midIdx = 65 - MIDI_LOWEST; // roughly F4
     expect(Math.abs(targets[midIdx])).toBeLessThan(1);
   });
 
-  it('partial_align strategy returns 88 values', () => {
+  it('railsback plateaus below A0 and preserves the published curve above', () => {
+    const targets = computeTargets({ kind: 'railsback' }, uprightB);
+    // Sub-A0 plateau holds the A0 deviation value (no invented data)
+    expect(targets.slice(0, 13)).toEqual(new Array(13).fill(-30.0));
+    // A0 seam keeps the published A0 deviation at index 12
+    expect(targets[12]).toBe(-30.0);
+    // C8 keeps the published treble endpoint at the new last index
+    expect(targets[NUM_KEYS - 1]).toBe(13.5);
+  });
+
+  it('partial_align strategy returns NUM_KEYS values', () => {
     const targets = computeTargets({ kind: 'partial_align', partial: 2 }, uprightB);
     expect(targets).toHaveLength(NUM_KEYS);
     // Higher notes with more inharmonicity need more stretch
@@ -32,17 +42,28 @@ describe('computeTargets', () => {
     // Second-to-last should also be near 0 or the fallback
   });
 
+  it('partial_align computes real targets for sub-A0 notes', () => {
+    const targets = computeTargets({ kind: 'partial_align', partial: 2 }, uprightB);
+    // A-1 (MIDI 9) has an octave above (A0) — must get a real computed target,
+    // not a fallback or a mis-indexed value
+    const idx = 9 - MIDI_LOWEST;
+    expect(idx).toBe(0);
+    expect(Number.isFinite(targets[idx])).toBe(true);
+    // Plateau B (A0 value) is non-zero → partial freq differs from ET octave
+    expect(Math.abs(targets[idx])).toBeGreaterThan(0);
+  });
+
   it('partial_align with partial=2 produces non-zero offsets for mid-range', () => {
     const targets = computeTargets({ kind: 'partial_align', partial: 2 }, uprightB);
-    // A4 (index 48) should have a measurable stretch
-    const a4Idx = 69 - MIDI_A0; // MIDI 69 = A4
+    // A4 should have a measurable stretch
+    const a4Idx = 69 - MIDI_LOWEST; // MIDI 69 = A4
     expect(Math.abs(targets[a4Idx])).toBeGreaterThan(0);
   });
 
   it('partial_align higher partials produce larger stretches', () => {
     const targets2 = computeTargets({ kind: 'partial_align', partial: 2 }, uprightB);
     const targets4 = computeTargets({ kind: 'partial_align', partial: 4 }, uprightB);
-    const midIdx = 48;
+    const midIdx = 69 - MIDI_LOWEST; // A4
     // Higher partials are sharper (due to inharmonicity), so need more compensation
     expect(Math.abs(targets4[midIdx])).toBeGreaterThan(Math.abs(targets2[midIdx]));
   });
@@ -89,12 +110,23 @@ describe('computeResults', () => {
 
   it('scores against non-zero targets correctly', () => {
     const stretchTargets = new Array(NUM_KEYS).fill(0);
-    stretchTargets[69 - MIDI_A0] = 5.0; // target is +5 cents for A4
+    stretchTargets[69 - MIDI_LOWEST] = 5.0; // target is +5 cents for A4
     const commits = new Map<number, number>();
     commits.set(69, 5.5); // user tuned to +5.5, error = 0.5
     const results = computeResults(commits, stretchTargets);
     expect(results.notes[0].error).toBeCloseTo(0.5, 5);
     expect(results.notes[0].targetCents).toBe(5.0);
+  });
+
+  it('scores sub-A0 commits (MIDI 9) against the correct target slot', () => {
+    const stretchTargets = new Array(NUM_KEYS).fill(0);
+    stretchTargets[9 - MIDI_LOWEST] = -30.0;
+    const commits = new Map<number, number>();
+    commits.set(9, -29.0);
+    const results = computeResults(commits, stretchTargets);
+    expect(results.notes).toHaveLength(1);
+    expect(results.notes[0].targetCents).toBe(-30.0);
+    expect(results.notes[0].error).toBeCloseTo(1.0, 5);
   });
 
   it('sorts results by MIDI note', () => {

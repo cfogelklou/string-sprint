@@ -3,10 +3,26 @@ import {
   PIANO_PROFILE_NAMES,
   MIDI_A0,
   MIDI_C8,
+  MIDI_LOWEST,
   NUM_KEYS,
 } from '@/types';
+import { keyIndexOf } from '@/model/pianoNotes';
 
-export const PIANO_B_PROFILES: Record<PianoProfileName, number[]> = {
+/**
+ * Prepend the sub-A0 plateau (MIDI 9-20): hold the A0 slot's value flat.
+ * No invented data below A0 — empirical tables end at A0 (CLAUDE.md
+ * B-coefficient rule: never extend theoretical curves below A0).
+ */
+/** Raw empirical table length: A0 (MIDI 21) through C8 (MIDI 108). */
+export const RAW_KEY_COUNT = MIDI_C8 - MIDI_A0 + 1;
+
+export function withSubA0Plateau(values88: number[]): number[] {
+  const plateauLen = MIDI_A0 - MIDI_LOWEST;
+  return new Array(plateauLen).fill(values88[0]).concat(values88);
+}
+
+/** Raw empirical tables, A0 (MIDI 21) through C8 (MIDI 108) — 88 values each. */
+const RAW_A0_C8_PROFILES = {
   [PIANO_PROFILE_NAMES.CONCERT_GRAND]:  [
     0.0001643, 0.0001559, 0.0001456, 0.0001349, 0.0001259, 0.0001168, 0.0001075, 0.0000981,
     0.0000900, 0.0000820, 0.0000742, 0.0000674, 0.0000590, 0.0000507, 0.0000437, 0.0000376,
@@ -85,9 +101,16 @@ export const PIANO_B_PROFILES: Record<PianoProfileName, number[]> = {
     0.0152098, 0.0169141, 0.0189602, 0.0213840, 0.0259840, 0.0301008, 0.0351726, 0.0404611,
     0.0460924, 0.0522526, 0.0592805, 0.0674268, 0.0727326, 0.0815428, 0.0923045, 0.1053650,
   ],
-  [PIANO_PROFILE_NAMES.OTHER]: new Array(NUM_KEYS).fill(0),
-  [PIANO_PROFILE_NAMES.IDEAL]: new Array(NUM_KEYS).fill(0),
-};
+  [PIANO_PROFILE_NAMES.OTHER]: new Array(RAW_KEY_COUNT).fill(0),
+  [PIANO_PROFILE_NAMES.IDEAL]: new Array(RAW_KEY_COUNT).fill(0),
+} as const;
+
+export const PIANO_B_PROFILES: Record<PianoProfileName, number[]> = Object.fromEntries(
+  Object.entries(RAW_A0_C8_PROFILES).map(([name, values88]) => [
+    name,
+    withSubA0Plateau([...values88]),
+  ]),
+) as Record<PianoProfileName, number[]>;
 
 export const PROFILE_LABELS: Record<PianoProfileName, string> = {
   [PIANO_PROFILE_NAMES.CONCERT_GRAND]: 'Concert Grand',
@@ -102,10 +125,10 @@ export const PROFILE_LABELS: Record<PianoProfileName, string> = {
 
 export function getBForNote(profile: PianoProfileName, midiNote: number): number {
   const values = PIANO_B_PROFILES[profile];
-  const index = midiNote - MIDI_A0;
+  const index = keyIndexOf(midiNote);
   if (index < 0 || index >= NUM_KEYS) {
     throw new RangeError(
-      `MIDI note ${midiNote} out of range [${MIDI_A0}, ${MIDI_C8}]`,
+      `MIDI note ${midiNote} out of range [${MIDI_LOWEST}, ${MIDI_C8}]`,
     );
   }
   return values[index];

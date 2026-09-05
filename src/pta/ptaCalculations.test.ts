@@ -3,34 +3,38 @@ import {
   calculateRailsbackOffset,
   gradeSampleMeasurements,
 } from './ptaCalculations';
-import { NUM_KEYS, PIANO_PROFILE_NAMES } from '@/types';
+import { MIDI_A0, MIDI_C8, MIDI_LOWEST, NUM_KEYS, PIANO_PROFILE_NAMES } from '@/types';
+import { keyIndexOf } from '@/model/pianoNotes';
 import { PIANO_B_PROFILES } from '@/bCoefficients/profiles';
+
+const idx = (midi: number) => keyIndexOf(midi);
 
 // ---------------------------------------------------------------------------
 // calculateRailsbackOffset
 // ---------------------------------------------------------------------------
 
 describe('calculateRailsbackOffset', () => {
-  it('returns 88 values', () => {
+  it('returns NUM_KEYS values', () => {
     const bValues = new Array(NUM_KEYS).fill(0.001);
     const result = calculateRailsbackOffset(bValues, '4:2');
-    expect(result).toHaveLength(88);
+    expect(result).toHaveLength(NUM_KEYS);
   });
 
   it('A4 has zero offset', () => {
     const bValues = new Array(NUM_KEYS).fill(0.001);
     const result = calculateRailsbackOffset(bValues, '4:2');
-    expect(result[48]).toBe(0); // A4 at index 48
+    expect(result[idx(69)]).toBe(0); // A4
   });
 
   it('bass is flat (negative cents) and treble is sharp (positive cents)', () => {
     const profile = PIANO_B_PROFILES[PIANO_PROFILE_NAMES.CONCERT_GRAND];
     const result = calculateRailsbackOffset(profile, '4:2');
 
-    expect(result[0]).toBeLessThan(0);  // A0
-    expect(result[10]).toBeLessThan(0); // Around E1
-    expect(result[80]).toBeGreaterThan(0); // Around A7
-    expect(result[87]).toBeGreaterThan(0); // C8
+    expect(result[idx(MIDI_LOWEST)]).toBeLessThan(0);   // A-1
+    expect(result[idx(MIDI_A0)]).toBeLessThan(0);       // A0
+    expect(result[idx(31)]).toBeLessThan(0);            // Around G1
+    expect(result[idx(101)]).toBeGreaterThan(0);        // Around A7
+    expect(result[idx(MIDI_C8)]).toBeGreaterThan(0);    // C8
   });
 
   it('6:3 style produces wider bass stretch than 4:2', () => {
@@ -42,7 +46,7 @@ describe('calculateRailsbackOffset', () => {
     // stretch vs 4:2. Treble is not asserted: with span=19 the upward
     // propagation from A4 cannot chain through sub-A4 anchors, so 6:3 treble
     // stretch is not meaningfully wider than 4:2.
-    expect(Math.abs(result63[0])).toBeGreaterThan(Math.abs(result42[0]));
+    expect(Math.abs(result63[idx(MIDI_A0)])).toBeGreaterThan(Math.abs(result42[idx(MIDI_A0)]));
   });
 
   it('concert-grand uses 6:3 in bass and 4:2 in treble', () => {
@@ -51,15 +55,32 @@ describe('calculateRailsbackOffset', () => {
     const result42 = calculateRailsbackOffset(profile, '4:2');
     const result63 = calculateRailsbackOffset(profile, '6:3');
 
-    const bassIdx = 10;
-    expect(Math.abs(resultCG[bassIdx])).toBeGreaterThanOrEqual(
-      Math.abs(result42[bassIdx]),
+    const bassMidi = 31;
+    expect(Math.abs(resultCG[idx(bassMidi)])).toBeGreaterThanOrEqual(
+      Math.abs(result42[idx(bassMidi)]),
     );
 
-    const trebleIdx = 70;
-    expect(Math.abs(resultCG[trebleIdx] - result42[trebleIdx])).toBeLessThanOrEqual(
-      Math.abs(resultCG[trebleIdx] - result63[trebleIdx]),
+    const trebleMidi = 91;
+    expect(Math.abs(resultCG[idx(trebleMidi)] - result42[idx(trebleMidi)])).toBeLessThanOrEqual(
+      Math.abs(resultCG[idx(trebleMidi)] - result63[idx(trebleMidi)]),
     );
+  });
+
+  it('bridge-break anchors at the given MIDI note, not the array index', () => {
+    const profile = PIANO_B_PROFILES[PIANO_PROFILE_NAMES.CONCERT_GRAND];
+    // Old default bridgeBreakIndex=27 meant MIDI 48 (C3). Passing MIDI 48
+    // explicitly must reproduce the same curve as the default.
+    const defaultResult = calculateRailsbackOffset(profile, 'concert-grand');
+    const explicit = calculateRailsbackOffset(profile, 'concert-grand', 440, 48);
+    expect(explicit).toEqual(defaultResult);
+  });
+
+  it('bridge-break transition moves the 6:3/4:2 boundary', () => {
+    const profile = PIANO_B_PROFILES[PIANO_PROFILE_NAMES.CONCERT_GRAND];
+    const at47 = calculateRailsbackOffset(profile, 'concert-grand', 440, 47);
+    const at48 = calculateRailsbackOffset(profile, 'concert-grand', 440, 48);
+    // Notes between the two bridge breaks flip alignment regime
+    expect(at47[idx(47)]).not.toBeCloseTo(at48[idx(47)], 6);
   });
 
   it('zero B values produce zero stretch', () => {
@@ -80,8 +101,8 @@ describe('calculateRailsbackOffset', () => {
       '4:2',
     );
 
-    expect(Math.abs(spinet[0])).toBeGreaterThan(Math.abs(concertGrand[0]));
-    expect(spinet[87]).toBeGreaterThan(concertGrand[87]);
+    expect(Math.abs(spinet[idx(MIDI_A0)])).toBeGreaterThan(Math.abs(concertGrand[idx(MIDI_A0)]));
+    expect(spinet[idx(MIDI_C8)]).toBeGreaterThan(concertGrand[idx(MIDI_C8)]);
   });
 
   it('pure-12ths uses wider span', () => {
@@ -89,7 +110,7 @@ describe('calculateRailsbackOffset', () => {
     const result12 = calculateRailsbackOffset(profile, '4:2');
     const resultPure12 = calculateRailsbackOffset(profile, 'pure-12ths');
 
-    expect(resultPure12[0]).not.toBeCloseTo(result12[0], 2);
+    expect(resultPure12[idx(MIDI_A0)]).not.toBeCloseTo(result12[idx(MIDI_A0)], 2);
   });
 });
 

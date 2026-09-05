@@ -1,6 +1,5 @@
 import { usePianoStore } from '@/store/pianoStore';
-import { MIDI_A0 } from '@/types';
-import { midiToFreq, midiToNoteName } from '@/model/pianoNotes';
+import { midiToFreq, midiToNoteName, keyIndexOf } from '@/model/pianoNotes';
 
 export default function NoteSelector() {
   const selectedKeyId = usePianoStore((s) => s.selectedKeyId);
@@ -10,7 +9,7 @@ export default function NoteSelector() {
   const activeTones = usePianoStore((s) => s.activeTones);
 
   const selectedKey = selectedKeyId !== null
-    ? keys[selectedKeyId - MIDI_A0]
+    ? keys[keyIndexOf(selectedKeyId)]
     : null;
 
   const noteName = selectedKey ? midiToNoteName(selectedKey.midiNote) : '--';

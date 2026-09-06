@@ -296,7 +296,7 @@ export default function VirtualKeyboard() {
                 <span
                   style={{
                     fontSize: 10,
-                    color: isActive ? 'var(--color-key-white, #fff)' : 'var(--color-text-dim, #333)',
+                    color: isActive ? 'var(--color-key-white, #fff)' : 'var(--color-key-label-dark, #333)',
                     fontWeight: 600,
                     pointerEvents: 'none',
                   }}

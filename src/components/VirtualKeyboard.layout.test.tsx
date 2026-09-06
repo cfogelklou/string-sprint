@@ -98,5 +98,3 @@ describe('VirtualKeyboard data-midi (capture-script contract)', () => {
     expect(key.getAttribute('aria-pressed')).toBe('false');
   });
 });
-
-

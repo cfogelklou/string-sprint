@@ -1,5 +1,6 @@
 import { usePianoStore } from '@/store/pianoStore';
 import { midiToFreq, midiToNoteName, keyIndexOf } from '@/model/pianoNotes';
+import { centsToFreqRatio } from '@/audio/partialFreq';
 
 export default function NoteSelector() {
   const selectedKeyId = usePianoStore((s) => s.selectedKeyId);
@@ -7,6 +8,7 @@ export default function NoteSelector() {
   const numPartials = usePianoStore((s) => s.numPartials);
   const setNumPartials = usePianoStore((s) => s.setNumPartials);
   const activeTones = usePianoStore((s) => s.activeTones);
+  const referenceFreq = usePianoStore((s) => s.referenceFreq);
 
   const selectedKey = selectedKeyId !== null
     ? keys[keyIndexOf(selectedKeyId)]
@@ -14,7 +16,7 @@ export default function NoteSelector() {
 
   const noteName = selectedKey ? midiToNoteName(selectedKey.midiNote) : '--';
   const frequency = selectedKey
-    ? midiToFreq(selectedKey.midiNote).toFixed(2)
+    ? (midiToFreq(selectedKey.midiNote, referenceFreq) * centsToFreqRatio(selectedKey.centsOffset)).toFixed(2)
     : '--';
   const bValue = selectedKey ? selectedKey.B.toFixed(6) : '--';
   const isToneActive = selectedKeyId !== null && activeTones.has(selectedKeyId);

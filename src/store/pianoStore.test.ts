@@ -72,7 +72,7 @@ describe('usePianoStore infinite sustain semantics', () => {
     usePianoStore.getState().setInfiniteSustain(false);
   });
 
-  it('removes ordinary active tones when infinite sustain is disabled', () => {
+  it('removes notes started with infinite sustain when mode is disabled', () => {
     usePianoStore.getState().setInfiniteSustain(true);
     usePianoStore.getState().playNote(69);
     expect(usePianoStore.getState().activeTones.has(69)).toBe(true);
@@ -82,7 +82,18 @@ describe('usePianoStore infinite sustain semantics', () => {
     expect(usePianoStore.getState().infiniteSustain).toBe(false);
   });
 
-  it('preserves dedicated tones with explicit infiniteSustain: true when global mode is disabled', () => {
+  it('preserves actively decaying notes started with normal decay when toggling sustain mode', () => {
+    usePianoStore.getState().setInfiniteSustain(false);
+    usePianoStore.getState().playNote(69);
+    expect(usePianoStore.getState().activeTones.has(69)).toBe(true);
+
+    usePianoStore.getState().setInfiniteSustain(true);
+    usePianoStore.getState().setInfiniteSustain(false);
+    // Note started under normal decay should still be in activeTones decaying naturally
+    expect(usePianoStore.getState().activeTones.has(69)).toBe(true);
+  });
+
+  it('preserves dedicated tones with manualPartials and explicit infiniteSustain when global mode is disabled', () => {
     usePianoStore.getState().playCustomTone(9999, {
       frequency: 110,
       B: 0,
@@ -90,6 +101,7 @@ describe('usePianoStore infinite sustain semantics', () => {
       numPartials: 6,
       sustainDuration: 2.0,
       infiniteSustain: true,
+      manualPartials: [{ freq: 110, amp: 1 }],
     });
 
     expect(usePianoStore.getState().activeTones.has(9999)).toBe(true);
@@ -98,4 +110,3 @@ describe('usePianoStore infinite sustain semantics', () => {
     expect(usePianoStore.getState().activeTones.has(9999)).toBe(true);
   });
 });
-

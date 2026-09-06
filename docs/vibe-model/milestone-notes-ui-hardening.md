@@ -56,6 +56,4 @@ Working artifact protecting against lost context while implementing `docs/plan-u
   - Impeccable detection (`node ~/.agents/skills/impeccable/scripts/detect.mjs --json src`): 0 findings.
   - Unslop UI scan (`python3 ~/.agents/skills/unslop-ui/scripts/devibe_scan.py . --json`): Score 2/100 (only intentional target-key pulse).
 - REQ-UI-006 verified: `Impl ✅ | Test ✅`.
-- Full quality gate pass: `bun run lint` (0 errors), `bun run test` (158 tests passing), `bun run build` (successful production build).
-
-
+- Full quality gate pass: `bun run lint` (0 errors), `bun run test` (159 tests passing), `bun run build` (successful production build).

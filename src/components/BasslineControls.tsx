@@ -67,7 +67,10 @@ export default function BasslineControls() {
     setActiveIdx(null);
   };
 
-  useEffect(() => () => stop(), [stopNote]);
+  useEffect(() => () => {
+    if (timerRef.current !== null) clearTimeout(timerRef.current);
+    if (currentMidiRef.current !== null) stopNote(currentMidiRef.current);
+  }, [stopNote]);
 
   const play = (variantIdx: number) => {
     clearTimer();
@@ -132,12 +135,14 @@ export default function BasslineControls() {
 
   return (
     <div
+      className="bassline-controls"
       style={{
         display: 'flex',
         gap: 8,
         padding: '6px 12px',
         background: 'var(--color-surface)',
         borderTop: '1px solid var(--color-text-dim)',
+        flexWrap: 'wrap',
       }}
     >
       {VARIANTS.map((v, idx) => {

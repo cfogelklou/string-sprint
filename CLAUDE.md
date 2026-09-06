@@ -142,3 +142,17 @@ There is no such thing as "pre-existing" errors. All errors must be considered "
 - **Main branch**: `main`
 - **Current branch**: Check before committing
 - **Conventional commits**: Use clear commit messages (e.g., "feat:", "fix:", "refactor:")
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are local Markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The local tracker uses the five standard triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repo has no required domain context or ADR structure; consume either if they are introduced later. See `docs/agents/domain.md`.

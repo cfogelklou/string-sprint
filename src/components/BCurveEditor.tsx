@@ -5,6 +5,7 @@ import { PianoProfileName, PIANO_PROFILE_NAMES, MIDI_LOWEST, MIDI_C8, RigaudPara
 import { generateProfile } from '@/bCoefficients/rigaud';
 import { PIANO_B_PROFILES } from '@/bCoefficients/profiles';
 import { midiAtIndex } from '@/model/pianoNotes';
+import { useModalDialog } from '@/hooks/useModalDialog';
 
 const PROFILE_KEYS: PianoProfileName[] = Object.values(PIANO_PROFILE_NAMES);
 const PADDING = { top: 20, right: 16, bottom: 30, left: 50 };
@@ -101,6 +102,7 @@ export default function BCurveEditor() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  useModalDialog(isOpen, toggle, sheetRef);
 
   // Compute current B profile
   const bProfile = useCustomProfile
@@ -165,6 +167,9 @@ export default function BCurveEditor() {
       {/* Sheet */}
       <div
         ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="b-curve-editor-title"
         onTouchStart={handleTouchStart}
         style={{
           position: 'fixed',
@@ -201,9 +206,10 @@ export default function BCurveEditor() {
               background: 'rgba(255,255,255,0.2)',
             }}
           />
-          <span style={{ fontSize: 14, fontWeight: 600 }}>B Curve Editor</span>
+          <span id="b-curve-editor-title" style={{ fontSize: 14, fontWeight: 600 }}>B Curve Editor</span>
           <button
             onClick={toggle}
+            aria-label="Close B Curve Editor"
             style={{
               background: 'none',
               border: 'none',

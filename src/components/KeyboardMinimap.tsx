@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
-import { NUM_KEYS } from '@/types';
-import { isBlackKey, midiAtIndex } from '@/model/pianoNotes';
+import { MIDI_C8, MIDI_LOWEST, NUM_KEYS } from '@/types';
+import { isBlackKey, midiAtIndex, midiToNoteName } from '@/model/pianoNotes';
 
 interface KeyboardMinimapProps {
   onJumpToNote: (midi: number) => void;
@@ -15,12 +15,26 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
 
   const isPlaying = tuningSimPhase === 'playing';
 
-  const handleClick = useCallback(
-    (midi: number) => () => {
-      onJumpToNote(midi);
-    },
-    [onJumpToNote],
-  );
+  const selectMidi = useCallback((midi: number) => {
+    onJumpToNote(Math.max(MIDI_LOWEST, Math.min(MIDI_C8, midi)));
+  }, [onJumpToNote]);
+
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    selectMidi(midiAtIndex(Math.round(ratio * (NUM_KEYS - 1))));
+  }, [selectMidi]);
+
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    const current = selectedKeyId ?? MIDI_LOWEST;
+    switch (event.key) {
+      case 'ArrowLeft': case 'ArrowDown': event.preventDefault(); selectMidi(current - 1); return;
+      case 'ArrowRight': case 'ArrowUp': event.preventDefault(); selectMidi(current + 1); return;
+      case 'Home': event.preventDefault(); selectMidi(MIDI_LOWEST); return;
+      case 'End': event.preventDefault(); selectMidi(MIDI_C8); return;
+      default: return;
+    }
+  }, [selectMidi, selectedKeyId]);
 
   // Count white keys for proportional layout
   let whiteCount = 0;
@@ -39,6 +53,13 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
 
   return (
     <div
+      role="slider"
+      tabIndex={0}
+      aria-label="Selected piano key"
+      aria-valuemin={MIDI_LOWEST}
+      aria-valuemax={MIDI_C8}
+      aria-valuenow={selectedKeyId ?? MIDI_LOWEST}
+      aria-valuetext={midiToNoteName(selectedKeyId ?? MIDI_LOWEST)}
       style={{
         width: '100%',
         maxWidth: totalWidth,
@@ -50,6 +71,8 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
         margin: '0 auto',
         touchAction: 'none',
       }}
+      onPointerDown={handlePointerDown}
+      onKeyDown={handleKeyDown}
     >
       {/* White keys */}
       {Array.from(whiteIndices.entries()).map(([midi, idx]) => {
@@ -75,7 +98,6 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
                     : '#f5f5f5',
               boxSizing: 'border-box',
             }}
-            onClick={handleClick(midi)}
           />
         );
       })}
@@ -116,7 +138,6 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
                 zIndex: 2,
                 borderRadius: '0 0 1px 1px',
               }}
-              onClick={handleClick(midi)}
             />
           );
         });

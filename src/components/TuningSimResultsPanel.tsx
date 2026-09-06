@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
+import { useModalDialog } from '@/hooks/useModalDialog';
 
 
 // ---------------------------------------------------------------------------
@@ -111,6 +112,7 @@ export default function TuningSimResultsPanel() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  useModalDialog(tuningSimResults !== null, backToPlaying, sheetRef);
 
   // Draw chart when results change
   useEffect(() => {
@@ -176,6 +178,9 @@ export default function TuningSimResultsPanel() {
       {/* Sheet */}
       <div
         ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tuning-results-title"
         onTouchStart={handleTouchStart}
         style={{
           position: 'fixed',
@@ -212,9 +217,10 @@ export default function TuningSimResultsPanel() {
               background: 'rgba(255,255,255,0.2)',
             }}
           />
-          <span style={{ fontSize: 14, fontWeight: 600 }}>Results</span>
+          <span id="tuning-results-title" style={{ fontSize: 14, fontWeight: 600 }}>Results</span>
           <button
             onClick={backToPlaying}
+            aria-label="Close Results"
             style={{
               background: 'none',
               border: 'none',

@@ -6,7 +6,22 @@
   --color-text: #e0e0e0;
   --color-text-dim: #999999;
   --color-destructive: #d32f2f;
+  --color-success: #00e676;
+  --color-warning: #ffaa00;
+  --color-danger: #ff4444;
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-control: rgba(255, 255, 255, 0.08);
+  --color-control-border: rgba(255, 255, 255, 0.12);
+  --focus-ring: #80b7ff;
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+button:focus-visible,
+input:focus-visible,
+[tabindex="0"]:focus-visible,
+[role="slider"]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 * {
@@ -53,8 +68,8 @@ html, body, #root {
 }
 
 .controls-bar-btn {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--color-control);
+  border: 1px solid var(--color-control-border);
   border-radius: 6px;
   color: var(--color-text);
   font-size: 12px;
@@ -87,6 +102,87 @@ html, body, #root {
   padding: 8px;
   background-color: var(--color-bg);
 }
+
+.jog-wheel,
+.jog-wheel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text);
+}
+
+.jog-wheel-empty {
+  min-height: 80px;
+  justify-content: center;
+  color: var(--color-text-dim);
+}
+
+.jog-wheel-dial {
+  position: relative;
+  width: 152px;
+  height: 152px;
+  border: 2px solid var(--color-text-dim);
+  border-radius: 50%;
+  background: var(--color-surface);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.jog-wheel-dial:active { cursor: grabbing; }
+
+.jog-wheel-index {
+  position: absolute;
+  top: 5px;
+  left: calc(50% - 2px);
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  z-index: 2;
+}
+
+.jog-wheel-tick {
+  position: absolute;
+  top: calc(50% - 2px);
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 6px;
+  transform-origin: 1px 2px;
+  background: var(--color-text-dim);
+}
+
+.jog-wheel-tick-major { height: 10px; background: var(--color-text); }
+
+.jog-wheel-readout {
+  position: absolute;
+  inset: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-bg);
+  text-align: center;
+}
+
+.jog-wheel-readout span, .jog-wheel-readout small { color: var(--color-text-dim); font-size: 11px; }
+.jog-wheel-readout strong { color: var(--color-accent); font-size: 24px; font-variant-numeric: tabular-nums; }
+
+.jog-wheel-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 320px; }
+.jog-wheel-steps button, .jog-wheel-reset {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-control-border);
+  border-radius: 6px;
+  background: var(--color-control);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+.jog-wheel-reset { min-width: 112px; }
 
 .controls-bar {
   display: flex;
@@ -218,6 +314,17 @@ html, body, #root {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .piano-key-target {
+    animation: none !important;
+    box-shadow: inset 0 0 0 3px #ff6600;
+  }
+}
+
 /* Game mode: always show tuning sim area */
 .tuning-sim-area.active {
   display: flex !important;
@@ -226,5 +333,26 @@ html, body, #root {
 @media (max-height: 500px) {
   .ad-banner-wrapper {
     display: none !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .controls-bar {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .controls-bar-title {
+    width: 100%;
+  }
+
+  .bassline-controls {
+    flex-wrap: wrap;
+    padding: 8px;
+  }
+
+  .bassline-controls > button {
+    flex-basis: calc(50% - 4px) !important;
+    min-height: 44px;
   }
 }

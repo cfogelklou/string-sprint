@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeAll } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { MIDI_LOWEST, MIDI_C8, NUM_KEYS } from '@/types';
 import VirtualKeyboard from './VirtualKeyboard';
 import { computeKeyLayout } from '@/model/keyLayout';
+import { usePianoStore } from '@/store/pianoStore';
 
 beforeAll(() => {
   // jsdom lacks ResizeObserver (used for key-height measurement)
@@ -13,6 +14,11 @@ beforeAll(() => {
     unobserve() {}
     disconnect() {}
   } as unknown as typeof ResizeObserver;
+});
+
+beforeEach(() => {
+  usePianoStore.getState().stopAll();
+  usePianoStore.getState().setInfiniteSustain(false);
 });
 
 describe('computeKeyLayout', () => {
@@ -55,5 +61,16 @@ describe('VirtualKeyboard data-midi (capture-script contract)', () => {
     }
     expect(document.querySelectorAll('[data-midi]')).toHaveLength(NUM_KEYS);
     screen.getByText('A-1'); // octave label on the lowest A key
+  });
+
+  it('keeps a normal key active after release when Infinite Sustain is enabled', () => {
+    usePianoStore.getState().setInfiniteSustain(true);
+    render(<VirtualKeyboard />);
+
+    const key = document.querySelector('[data-midi="69"]')!;
+    fireEvent.pointerDown(key, { clientX: 100 });
+    fireEvent.pointerUp(key, { clientX: 100 });
+
+    expect(usePianoStore.getState().activeTones.has(69)).toBe(true);
   });
 });

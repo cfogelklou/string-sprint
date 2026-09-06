@@ -41,10 +41,12 @@ export default function PTAMeasureStep() {
         }}>
           <div style={{
             height: '100%',
-            width: `${(capturedCount / 8) * 100}%`,
+            width: '100%',
             background: 'var(--color-accent)',
             borderRadius: 2,
-            transition: 'width 0.2s',
+            transform: `scaleX(${capturedCount / 8})`,
+            transformOrigin: 'left',
+            transition: 'transform 0.2s',
           }} />
         </div>
       </div>

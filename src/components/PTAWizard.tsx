@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback } from 'react';
+import { useModalDialog } from '@/hooks/useModalDialog';
 import { usePTAStore } from '@/store/ptaStore';
 import PTASetupStep from './PTASetupStep';
 import PTABridgeBreakStep from './PTABridgeBreakStep';
@@ -13,6 +14,7 @@ export default function PTAWizard() {
   const sheetRef = useRef<HTMLDivElement>(null);
   const [dragY, setDragY] = useState(0);
   const dragStartY = useRef(0);
+  useModalDialog(true, stopPTAMode, sheetRef);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     dragStartY.current = e.touches[0].clientY;
@@ -79,6 +81,9 @@ export default function PTAWizard() {
       {/* Bottom sheet */}
       <div
         ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pta-wizard-title"
         style={{
           position: 'fixed',
           bottom: 0,
@@ -120,7 +125,7 @@ export default function PTAWizard() {
             background: 'var(--color-text-dim)',
           }} />
 
-          <div style={{ flex: 1, fontWeight: 600, fontSize: 16 }}>
+          <div id="pta-wizard-title" style={{ flex: 1, fontWeight: 600, fontSize: 16 }}>
             Calibration Test
           </div>
 
@@ -143,6 +148,7 @@ export default function PTAWizard() {
 
           <button
             onClick={stopPTAMode}
+            aria-label="Close Calibration Test"
             style={{
               background: 'none',
               border: 'none',

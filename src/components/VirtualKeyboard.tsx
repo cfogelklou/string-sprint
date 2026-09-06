@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
 import { midiToNoteName } from '@/model/pianoNotes';
 import { computeKeyLayout, WHITE_KEY_WIDTH, BLACK_KEY_WIDTH } from '@/model/keyLayout';
+import { MIDI_C8, MIDI_LOWEST } from '@/types';
 
 const MIN_WHITE_HEIGHT = 100;
 const MIN_BLACK_HEIGHT = 60;
@@ -43,6 +44,7 @@ export default function VirtualKeyboard() {
   const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
   const tuningSimCompleted = usePianoStore((s) => s.tuningSimCompleted);
   const tuningSimTargetMidi = usePianoStore((s) => s.tuningSimTargetMidi);
+  const infiniteSustain = usePianoStore((s) => s.infiniteSustain);
 
   const isPlaying = tuningSimPhase === 'playing';
 
@@ -158,21 +160,63 @@ export default function VirtualKeyboard() {
     (midi: number) => (e: React.PointerEvent) => {
       e.preventDefault();
       pointerDownRef.current = false;
-      stopNote(midi);
+      if (!infiniteSustain) stopNote(midi);
     },
-    [stopNote],
+    [infiniteSustain, stopNote],
   );
 
   const handlePointerLeave = useCallback(
     (midi: number) => () => {
       // Only stop a note we are actively pressing — prevents scroll/hover-pan
       // from killing notes sounded by other sources (minimap, tuning sim).
-      if (pointerDownRef.current) {
+      if (pointerDownRef.current && !infiniteSustain) {
         stopNote(midi);
       }
     },
-    [stopNote],
+    [infiniteSustain, stopNote],
   );
+
+  const focusMidi = useCallback((midi: number) => {
+    const nextMidi = Math.max(MIDI_LOWEST, Math.min(MIDI_C8, midi));
+    selectKey(nextMidi);
+    document.querySelector<HTMLElement>(`[data-midi="${nextMidi}"]`)?.focus();
+  }, [selectKey]);
+
+  const handleKeyDown = useCallback((midi: number) => (e: React.KeyboardEvent<HTMLDivElement>) => {
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        focusMidi(midi - 1);
+        return;
+      case 'ArrowRight':
+        e.preventDefault();
+        focusMidi(midi + 1);
+        return;
+      case 'Home':
+        e.preventDefault();
+        focusMidi(MIDI_LOWEST);
+        return;
+      case 'End':
+        e.preventDefault();
+        focusMidi(MIDI_C8);
+        return;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        playNote(midi);
+        selectKey(midi);
+        return;
+      default:
+        return;
+    }
+  }, [focusMidi, playNote, selectKey]);
+
+  const handleKeyUp = useCallback((midi: number) => (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if ((e.key === 'Enter' || e.key === ' ') && !infiniteSustain) {
+      e.preventDefault();
+      stopNote(midi);
+    }
+  }, [infiniteSustain, stopNote]);
 
   return (
     <div
@@ -209,6 +253,11 @@ export default function VirtualKeyboard() {
             <div
               key={midi}
               data-midi={midi}
+              role="button"
+              tabIndex={selectedKeyId === midi || (selectedKeyId === null && midi === MIDI_LOWEST) ? 0 : -1}
+              aria-label={`Play ${name}`}
+              aria-pressed={isActive}
+              className={isTarget ? 'piano-key-target' : undefined}
               style={{
                 position: 'absolute',
                 left: x,
@@ -240,6 +289,8 @@ export default function VirtualKeyboard() {
               onPointerDown={handlePointerDown(midi)}
               onPointerUp={handlePointerUp(midi)}
               onPointerLeave={handlePointerLeave(midi)}
+              onKeyDown={handleKeyDown(midi)}
+              onKeyUp={handleKeyUp(midi)}
             >
               {isALabel && (
                 <span
@@ -280,6 +331,11 @@ export default function VirtualKeyboard() {
             <div
               key={midi}
               data-midi={midi}
+              role="button"
+              tabIndex={selectedKeyId === midi ? 0 : -1}
+              aria-label={`Play ${midiToNoteName(midi)}`}
+              aria-pressed={isActive}
+              className={isTarget ? 'piano-key-target' : undefined}
               style={{
                 position: 'absolute',
                 left: x,
@@ -306,6 +362,8 @@ export default function VirtualKeyboard() {
               onPointerDown={handlePointerDown(midi)}
               onPointerUp={handlePointerUp(midi)}
               onPointerLeave={handlePointerLeave(midi)}
+              onKeyDown={handleKeyDown(midi)}
+              onKeyUp={handleKeyUp(midi)}
             >
               {isCommitted && (
                 <span

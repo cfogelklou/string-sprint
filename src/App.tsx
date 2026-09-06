@@ -13,7 +13,6 @@ import PTAWizard from '@/components/PTAWizard';
 import { usePTAStore } from '@/store/ptaStore';
 import TuningSimPanel from '@/components/TuningSimPanel';
 import TuningSimResultsPanel from '@/components/TuningSimResultsPanel';
-import { AdBanner } from '@/components/AdBanner';
 
 export default function App() {
   const isAudioInitialized = usePianoStore((s) => s.isAudioInitialized);
@@ -178,9 +177,6 @@ export default function App() {
 
         {/* Results reveal overlay */}
         <TuningSimResultsPanel />
-      </div>
-      <div className="ad-banner-wrapper" style={{ width: '100%' }}>
-        <AdBanner orientation="portrait" height={90} width={1200} />
       </div>
     </div>
   );

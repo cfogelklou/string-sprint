@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
 import { HELP_SECTIONS } from '@/components/helpContent';
+import { useModalDialog } from '@/hooks/useModalDialog';
 
 export default function HelpSheet() {
   const isOpen = usePianoStore((s) => s.isHelpOpen);
@@ -9,6 +10,7 @@ export default function HelpSheet() {
 
   const sheetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  useModalDialog(isOpen, closeHelp, sheetRef);
 
   // Scroll to the requested section when the sheet opens with one.
   // Direct scrollTop math (not scrollIntoView): iOS Safari doesn't always treat
@@ -80,6 +82,9 @@ export default function HelpSheet() {
       {/* Sheet */}
       <div
         ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="help-sheet-title"
         onTouchStart={handleTouchStart}
         style={{
           position: 'fixed',
@@ -116,9 +121,10 @@ export default function HelpSheet() {
               background: 'rgba(255,255,255,0.2)',
             }}
           />
-          <span style={{ fontSize: 14, fontWeight: 600 }}>Help</span>
+          <span id="help-sheet-title" style={{ fontSize: 14, fontWeight: 600 }}>Help</span>
           <button
             onClick={closeHelp}
+            aria-label="Close Help"
             style={{
               background: 'none',
               border: 'none',
@@ -185,7 +191,7 @@ export default function HelpSheet() {
                     margin: '6px 0 0',
                     padding: '8px 10px',
                     background: 'rgba(0, 230, 118, 0.08)',
-                    borderLeft: '3px solid var(--color-accent)',
+                    border: '1px solid var(--color-accent)',
                     borderRadius: 4,
                     color: 'var(--color-text)',
                   }}

@@ -1,423 +1,116 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { usePianoStore } from '@/store/pianoStore';
 import { keyIndexOf } from '@/model/pianoNotes';
 
-const SENSITIVITY = 10; // px per cent
-const FRICTION = 0.95;
 const MIN_CENTS = -100;
 const MAX_CENTS = 100;
+const SMALL_STEP = 0.1;
+const LARGE_STEP = 1;
+const COARSE_STEP = 5;
+const DIAL_RADIUS = 62;
+const CENTS_PER_TURN = 120;
 
-function clampCents(v: number): number {
-  return Math.round(Math.min(MAX_CENTS, Math.max(MIN_CENTS, v)) * 10) / 10;
+const FINE_STEPS = [
+  { label: '−5¢', delta: -COARSE_STEP }, { label: '−1¢', delta: -LARGE_STEP },
+  { label: '−0.1¢', delta: -SMALL_STEP }, { label: '+0.1¢', delta: SMALL_STEP },
+  { label: '+1¢', delta: LARGE_STEP }, { label: '+5¢', delta: COARSE_STEP },
+] as const;
+
+function clampCents(value: number): number {
+  return Math.round(Math.min(MAX_CENTS, Math.max(MIN_CENTS, value)) * 10) / 10;
+}
+
+function pointerAngle(element: HTMLElement, clientX: number, clientY: number): number {
+  const rect = element.getBoundingClientRect();
+  return Math.atan2(clientY - rect.top - rect.height / 2, clientX - rect.left - rect.width / 2);
+}
+
+function angleDelta(previous: number, next: number): number {
+  let delta = next - previous;
+  if (delta > Math.PI) delta -= Math.PI * 2;
+  if (delta < -Math.PI) delta += Math.PI * 2;
+  return delta;
 }
 
 export default function CentsJogWheel() {
-  const selectedKeyId = usePianoStore((s) => s.selectedKeyId);
-  const keys = usePianoStore((s) => s.keys);
-  const setCentsOffset = usePianoStore((s) => s.setCentsOffset);
-  const tuningSimPhase = usePianoStore((s) => s.tuningSimPhase);
-  const playNote = usePianoStore((s) => s.playNote);
-  const stopNote = usePianoStore((s) => s.stopNote);
+  const selectedKeyId = usePianoStore((state) => state.selectedKeyId);
+  const keys = usePianoStore((state) => state.keys);
+  const tuningSimPhase = usePianoStore((state) => state.tuningSimPhase);
+  const setCentsOffset = usePianoStore((state) => state.setCentsOffset);
+  const playNote = usePianoStore((state) => state.playNote);
+  const stopNote = usePianoStore((state) => state.stopNote);
+  const lastAngleRef = useRef<number | null>(null);
 
-  const keyIndex = selectedKeyId !== null ? keyIndexOf(selectedKeyId) : -1;
+  const keyIndex = selectedKeyId === null ? -1 : keyIndexOf(selectedKeyId);
   const currentCents = keyIndex >= 0 && keyIndex < keys.length ? keys[keyIndex].centsOffset : 0;
+  const isPractice = tuningSimPhase === 'playing';
 
-  const [localCents, setLocalCents] = useState(currentCents);
-  const [isDragging, setIsDragging] = useState(false);
+  const setCents = useCallback((value: number) => {
+    if (selectedKeyId !== null) setCentsOffset(selectedKeyId, clampCents(value));
+  }, [selectedKeyId, setCentsOffset]);
 
-  const inertiaCentsRef = useRef(currentCents);
-
-  const dragRef = useRef({
-    startX: 0,
-    startCents: 0,
-    velocity: 0,
-    lastX: 0,
-    lastTime: 0,
-    animFrame: 0,
-  });
-
-  // Sync local state when key changes externally
-  useEffect(() => {
-    if (!isDragging) {
-      setLocalCents(currentCents);
+  const nudge = useCallback((delta: number) => {
+    setCents(currentCents + delta);
+    if (selectedKeyId !== null) {
+      stopNote(selectedKeyId);
+      window.setTimeout(() => playNote(selectedKeyId), 20);
     }
-  }, [currentCents, isDragging]);
+  }, [currentCents, playNote, selectedKeyId, setCents, stopNote]);
 
-  const commitCents = useCallback(
-    (v: number) => {
-      const clamped = clampCents(v);
-      inertiaCentsRef.current = clamped;
-      setLocalCents(clamped);
-      if (selectedKeyId !== null) {
-        setCentsOffset(selectedKeyId, clamped);
-      }
-    },
-    [selectedKeyId, setCentsOffset],
-  );
-
-  const stopInertia = useCallback(() => {
-    if (dragRef.current.animFrame) {
-      cancelAnimationFrame(dragRef.current.animFrame);
-      dragRef.current.animFrame = 0;
-    }
+  const onPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    lastAngleRef.current = pointerAngle(event.currentTarget, event.clientX, event.clientY);
   }, []);
 
-  const hapticBoundary = useCallback((prev: number, next: number) => {
-    if (navigator.vibrate) {
-      const prevWhole = Math.round(prev);
-      const nextWhole = Math.round(next);
-      if (prevWhole !== nextWhole) {
-        navigator.vibrate(10);
-      }
+  const onPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const previous = lastAngleRef.current;
+    if (previous === null) return;
+    const next = pointerAngle(event.currentTarget, event.clientX, event.clientY);
+    lastAngleRef.current = next;
+    setCents(currentCents + (angleDelta(previous, next) / (Math.PI * 2)) * CENTS_PER_TURN);
+  }, [currentCents, setCents]);
+
+  const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? LARGE_STEP : SMALL_STEP;
+    switch (event.key) {
+      case 'ArrowUp': case 'ArrowRight': event.preventDefault(); nudge(step); return;
+      case 'ArrowDown': case 'ArrowLeft': event.preventDefault(); nudge(-step); return;
+      case 'PageUp': event.preventDefault(); nudge(COARSE_STEP); return;
+      case 'PageDown': event.preventDefault(); nudge(-COARSE_STEP); return;
+      case 'Home': event.preventDefault(); setCents(MIN_CENTS); return;
+      case 'End': event.preventDefault(); setCents(MAX_CENTS); return;
+      default: return;
     }
-  }, []);
-
-  const runInertia = useCallback(() => {
-    const d = dragRef.current;
-    d.velocity *= FRICTION;
-    if (Math.abs(d.velocity) < 0.05) {
-      d.animFrame = 0;
-      setIsDragging(false);
-      return;
-    }
-    const prevCents = inertiaCentsRef.current;
-    const next = clampCents(prevCents + d.velocity);
-    inertiaCentsRef.current = next;
-    commitCents(next);
-    hapticBoundary(prevCents, next);
-    d.animFrame = requestAnimationFrame(runInertia);
-  }, [commitCents, hapticBoundary]);
-
-  const handleDragStart = useCallback(
-    (clientX: number) => {
-      stopInertia();
-      setIsDragging(true);
-      const d = dragRef.current;
-      d.startX = clientX;
-      d.startCents = currentCents;
-      d.velocity = 0;
-      d.lastX = clientX;
-      d.lastTime = performance.now();
-    },
-    [currentCents, stopInertia],
-  );
-
-  const handleDragMove = useCallback(
-    (clientX: number) => {
-      const d = dragRef.current;
-      const dx = clientX - d.startX;
-      const now = performance.now();
-      const dt = now - d.lastTime;
-      if (dt > 0) {
-        d.velocity = ((clientX - d.lastX) / dt) * 16;
-      }
-      d.lastX = clientX;
-      d.lastTime = now;
-
-      const deltaCents = dx / SENSITIVITY;
-      const prev = d.startCents;
-      const next = clampCents(prev + deltaCents);
-      commitCents(next);
-      hapticBoundary(prev, next);
-    },
-    [commitCents, hapticBoundary],
-  );
-
-  const handleDragEnd = useCallback(() => {
-    const d = dragRef.current;
-    if (Math.abs(d.velocity) > 0.5) {
-      d.animFrame = requestAnimationFrame(runInertia);
-    } else {
-      setIsDragging(false);
-    }
-  }, [runInertia]);
+  }, [nudge, setCents]);
 
   useEffect(() => {
-    return () => stopInertia();
-  }, [stopInertia]);
-
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
-      handleDragStart(e.touches[0].clientX);
-    },
-    [handleDragStart],
-  );
-
-  const onTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      e.preventDefault();
-      handleDragMove(e.touches[0].clientX);
-    },
-    [handleDragMove],
-  );
-
-  const onTouchEnd = useCallback(() => {
-    handleDragEnd();
-  }, [handleDragEnd]);
-
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      handleDragStart(e.clientX);
-      const onMouseMove = (ev: MouseEvent) => handleDragMove(ev.clientX);
-      const onMouseUp = () => {
-        handleDragEnd();
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
-      };
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-    },
-    [handleDragStart, handleDragMove, handleDragEnd],
-  );
-
-  const handleReset = useCallback(() => {
-    stopInertia();
-    setIsDragging(false);
-    commitCents(0);
-  }, [commitCents, stopInertia]);
-
-  const nudgeCents = useCallback(
-    (delta: number) => {
-      stopInertia();
-      const next = clampCents(currentCents + delta);
-      commitCents(next);
-      // Re-trigger note so user hears the new pitch
-      if (selectedKeyId !== null) {
-        stopNote(selectedKeyId);
-        // Small delay so the engine processes stop before play
-        setTimeout(() => playNote(selectedKeyId), 20);
-      }
-    },
-    [currentCents, commitCents, stopInertia, selectedKeyId, playNote, stopNote],
-  );
-
-  const displayValue = isDragging ? localCents : currentCents;
-  const sign = displayValue >= 0 ? '+' : '';
-  const isPlaying = tuningSimPhase === 'playing';
-
-  // Keyboard shortcuts: q/a = ±1¢, w/s = ±0.1¢, e/d = ±0.01¢
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (selectedKeyId === null) return;
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
-      switch (e.key.toLowerCase()) {
-        case 'q': nudgeCents(1); break;
-        case 'a': nudgeCents(-1); break;
-        case 'w': nudgeCents(0.1); break;
-        case 's': nudgeCents(-0.1); break;
-        case 'e': nudgeCents(0.01); break;
-        case 'd': nudgeCents(-0.01); break;
-        case 'r': handleReset(); break;
+    const shortcut = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLButtonElement) return;
+      switch (event.key.toLowerCase()) {
+        case 'q': nudge(LARGE_STEP); break; case 'a': nudge(-LARGE_STEP); break;
+        case 'w': nudge(SMALL_STEP); break; case 's': nudge(-SMALL_STEP); break;
+        case 'e': nudge(0.01); break; case 'd': nudge(-0.01); break;
+        case 'r': setCents(0); break; default: return;
       }
     };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [selectedKeyId, nudgeCents, handleReset]);
+    window.addEventListener('keydown', shortcut);
+    return () => window.removeEventListener('keydown', shortcut);
+  }, [nudge, setCents]);
 
-  // Fine-adjust button row (shared between game and normal mode)
-  const FINE_STEPS = [
-    { label: '−5¢', delta: -5 },
-    { label: '−1¢', delta: -1 },
-    { label: '−0.1¢', delta: -0.1 },
-    { label: '+0.1¢', delta: 0.1 },
-    { label: '+1¢', delta: 1 },
-    { label: '+5¢', delta: 5 },
-  ] as const;
+  if (selectedKeyId === null) return <div className="jog-wheel-empty">Select a piano key to tune it</div>;
 
-  const btnStyle = {
-    background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 4,
-    color: 'var(--color-text)',
-    fontSize: 11,
-    padding: '3px 6px',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    whiteSpace: 'nowrap' as const,
-    flex: 1,
-    textAlign: 'center' as const,
-  };
+  const valueText = `${currentCents >= 0 ? '+' : ''}${currentCents.toFixed(1)}¢`;
+  const accessibility = isPractice
+    ? { role: 'group' as const, 'aria-label': 'Cents jog wheel. Use arrow keys or precision buttons to tune the selected note.' }
+    : { role: 'slider' as const, 'aria-label': 'Cents jog wheel', 'aria-valuemin': MIN_CENTS, 'aria-valuemax': MAX_CENTS, 'aria-valuenow': currentCents, 'aria-valuetext': `${currentCents >= 0 ? 'plus ' : ''}${currentCents.toFixed(1)} cents` };
 
-  const fineAdjustRow = (
-    <div style={{ display: 'flex', gap: 4, padding: '0 8px 6px' }}>
-      {FINE_STEPS.map(({ label, delta }) => (
-        <button key={label} onClick={() => nudgeCents(delta)} style={btnStyle}>
-          {label}
-        </button>
-      ))}
+  return <section className="jog-wheel" aria-label="Cents adjustment">
+    <div {...accessibility} tabIndex={0} className="jog-wheel-dial" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={() => { lastAngleRef.current = null; }} onPointerCancel={() => { lastAngleRef.current = null; }} onKeyDown={onKeyDown}>
+      <span className="jog-wheel-index" aria-hidden="true" />
+      {Array.from({ length: 24 }, (_, index) => <span key={index} aria-hidden="true" className={index % 3 === 0 ? 'jog-wheel-tick jog-wheel-tick-major' : 'jog-wheel-tick'} style={{ transform: `rotate(${index * 15}deg) translateY(-${DIAL_RADIUS}px)` }} />)}
+      <div className="jog-wheel-readout"><span>{isPractice ? 'Tune this note' : `MIDI ${selectedKeyId}`}</span><strong>{isPractice ? 'Use your ear' : valueText}</strong><small>{isPractice ? 'Turn or nudge' : 'clockwise sharpens'}</small></div>
     </div>
-  );
-
-  // Tick marks
-  const ticks = [];
-  for (let c = MIN_CENTS; c <= MAX_CENTS; c += 10) {
-    const pct = ((c - MIN_CENTS) / (MAX_CENTS - MIN_CENTS)) * 100;
-    const isMajor = c % 50 === 0;
-    ticks.push(
-      <div
-        key={c}
-        style={{
-          position: 'absolute',
-          left: `${pct}%`,
-          top: isMajor ? '50%' : '60%',
-          transform: 'translateX(-50%)',
-          width: 1,
-          height: isMajor ? 16 : 8,
-          background: isMajor ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
-        }}
-      />,
-    );
-  }
-
-  if (selectedKeyId === null) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 80,
-          background: 'var(--color-surface)',
-          borderRadius: 8,
-          padding: 16,
-          color: 'var(--color-text-dim)',
-          fontSize: 14,
-        }}
-      >
-        Tap a key to select it
-      </div>
-    );
-  }
-
-  // Game mode: NO feedback — just drag/buttons and a neutral label
-  if (isPlaying) {
-    return (
-      <div
-        style={{
-          position: 'relative',
-          minHeight: 80,
-          background: 'var(--color-surface)',
-          borderRadius: 8,
-          overflow: 'hidden',
-          touchAction: 'none',
-          userSelect: 'none',
-          cursor: isDragging ? 'grabbing' : 'grab',
-        }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onMouseDown={onMouseDown}
-      >
-        {/* Tick background */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          {ticks}
-        </div>
-
-        {/* Neutral display — no sharp/flat hint */}
-        <div
-          style={{
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-            minHeight: 80,
-            zIndex: 1,
-            padding: '8px 16px',
-          }}
-        >
-          <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text-dim)' }}>
-            Tune this note
-          </span>
-          <span style={{ fontSize: 10, color: 'var(--color-text-dim)', opacity: 0.4 }}>
-            ← swipe → or buttons below · use your ear!
-          </span>
-        </div>
-
-        {/* Fine-adjust buttons */}
-        {fineAdjustRow}
-      </div>
-    );
-  }
-
-  // Normal mode: exact cents display
-  return (
-    <div
-      style={{
-        position: 'relative',
-        minHeight: 80,
-        background: 'var(--color-surface)',
-        borderRadius: 8,
-        overflow: 'hidden',
-        touchAction: 'none',
-        userSelect: 'none',
-        cursor: isDragging ? 'grabbing' : 'grab',
-      }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onMouseDown={onMouseDown}
-    >
-      {/* Tick background */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-        {ticks}
-      </div>
-
-      {/* Cents readout */}
-      <div
-        style={{
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 16,
-          minHeight: 80,
-          zIndex: 1,
-        }}
-      >
-        <div
-          style={{
-            fontFeatureSettings: '"tnum"',
-            fontVariantNumeric: 'tabular-nums',
-            fontSize: 28,
-            fontWeight: 700,
-            color: Math.abs(displayValue) < 0.1 ? 'var(--color-accent)' : 'var(--color-text)',
-            letterSpacing: 1,
-            minWidth: 160,
-            textAlign: 'center',
-          }}
-        >
-          {sign}
-          {displayValue.toFixed(1)} cents
-        </div>
-      </div>
-
-      {/* Reset button */}
-      <button
-        onClick={handleReset}
-        style={{
-          position: 'absolute',
-          right: 8,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: 6,
-          color: 'var(--color-text)',
-          fontSize: 12,
-          padding: '4px 10px',
-          cursor: 'pointer',
-          zIndex: 2,
-        }}
-      >
-        Reset (R)
-      </button>
-
-      {/* Fine-adjust buttons */}
-      {fineAdjustRow}
-    </div>
-  );
+    <div className="jog-wheel-steps" aria-label="Fine cents adjustment">{FINE_STEPS.map(({ label, delta }) => <button key={label} type="button" onClick={() => nudge(delta)}>{label}</button>)}</div>
+    {!isPractice && <button className="jog-wheel-reset" type="button" onClick={() => setCents(0)}>Reset to 0¢</button>}
+  </section>;
 }

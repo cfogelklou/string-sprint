@@ -12,8 +12,8 @@ export default function PTABridgeBreakStep() {
       <div style={{
         padding: 16,
         borderRadius: 8,
-        background: 'rgba(0, 230, 118, 0.08)',
-        border: '1px solid rgba(0, 230, 118, 0.2)',
+        background: 'var(--color-success-dim, rgba(0, 230, 118, 0.08))',
+        border: '1px solid var(--color-success-muted, rgba(0, 230, 118, 0.2))',
       }}>
         <h3 style={{ margin: '0 0 8px', fontSize: 14, color: 'var(--color-accent)' }}>
           What is Bridge Break?

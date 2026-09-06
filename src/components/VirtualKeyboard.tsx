@@ -266,12 +266,12 @@ export default function VirtualKeyboard() {
                 height: whiteKeyHeight,
                 background: isActive
                   ? 'var(--color-accent, #4a9eff)'
-                  : 'var(--color-text, #ffffff)',
+                  : 'var(--color-key-white, #ffffff)',
                 border: isSelected
                   ? '3px solid var(--color-accent, #4a9eff)'
                   : isTarget
-                    ? '3px solid #ff6600'
-                    : '1px solid #ccc',
+                    ? '3px solid var(--color-target, #ff6600)'
+                    : '1px solid var(--color-key-white-border, #ccc)',
                 borderRadius: '0 0 4px 4px',
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -296,7 +296,7 @@ export default function VirtualKeyboard() {
                 <span
                   style={{
                     fontSize: 10,
-                    color: isActive ? '#fff' : '#333',
+                    color: isActive ? 'var(--color-key-white, #fff)' : 'var(--color-text-dim, #333)',
                     fontWeight: 600,
                     pointerEvents: 'none',
                   }}
@@ -308,7 +308,7 @@ export default function VirtualKeyboard() {
                 <span
                   style={{
                     fontSize: 12,
-                    color: '#00e676',
+                    color: 'var(--color-success, #00e676)',
                     pointerEvents: 'none',
                     marginTop: 2,
                   }}
@@ -344,12 +344,12 @@ export default function VirtualKeyboard() {
                 height: blackKeyHeight,
                 background: isActive
                   ? 'var(--color-accent, #4a9eff)'
-                  : '#1a1a2e',
+                  : 'var(--color-key-black, #1a1a2e)',
                 border: isSelected
                   ? '3px solid var(--color-accent, #4a9eff)'
                   : isTarget
-                    ? '3px solid #ff6600'
-                    : '1px solid #000',
+                    ? '3px solid var(--color-target, #ff6600)'
+                    : '1px solid var(--color-key-black-border, #000)',
                 borderRadius: '0 0 3px 3px',
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -373,7 +373,7 @@ export default function VirtualKeyboard() {
                     left: '50%',
                     transform: 'translateX(-50%)',
                     fontSize: 10,
-                    color: '#00e676',
+                    color: 'var(--color-success, #00e676)',
                     pointerEvents: 'none',
                   }}
                 >

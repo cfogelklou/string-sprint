@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, act } from '@testing-library/react';
 import React from 'react';
 import { MIDI_LOWEST, MIDI_C8, NUM_KEYS } from '@/types';
 import VirtualKeyboard from './VirtualKeyboard';
@@ -64,7 +64,9 @@ describe('VirtualKeyboard data-midi (capture-script contract)', () => {
   });
 
   it('keeps a normal key active after release when Infinite Sustain is enabled', () => {
-    usePianoStore.getState().setInfiniteSustain(true);
+    act(() => {
+      usePianoStore.getState().setInfiniteSustain(true);
+    });
     render(<VirtualKeyboard />);
 
     const key = document.querySelector('[data-midi="69"]')!;
@@ -72,5 +74,29 @@ describe('VirtualKeyboard data-midi (capture-script contract)', () => {
     fireEvent.pointerUp(key, { clientX: 100 });
 
     expect(usePianoStore.getState().activeTones.has(69)).toBe(true);
+    expect(key.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('clears active normal note when Infinite Sustain is subsequently disabled', () => {
+    act(() => {
+      usePianoStore.getState().setInfiniteSustain(true);
+    });
+    render(<VirtualKeyboard />);
+
+    const key = document.querySelector('[data-midi="69"]')!;
+    fireEvent.pointerDown(key, { clientX: 100 });
+    fireEvent.pointerUp(key, { clientX: 100 });
+
+    expect(usePianoStore.getState().activeTones.has(69)).toBe(true);
+    expect(key.getAttribute('aria-pressed')).toBe('true');
+
+    act(() => {
+      usePianoStore.getState().setInfiniteSustain(false);
+    });
+
+    expect(usePianoStore.getState().activeTones.has(69)).toBe(false);
+    expect(key.getAttribute('aria-pressed')).toBe('false');
   });
 });
+
+

@@ -43,7 +43,7 @@ export default function TuningSimPanel() {
             background: 'var(--color-primary)',
             border: 'none',
             borderRadius: 8,
-            color: '#fff',
+            color: 'var(--color-key-white, #fff)',
             fontSize: 14,
             fontWeight: 700,
             padding: '10px 16px',

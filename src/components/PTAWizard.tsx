@@ -73,7 +73,7 @@ export default function PTAWizard() {
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'var(--color-overlay, rgba(0, 0, 0, 0.5))',
           zIndex: 200,
         }}
       />
@@ -212,7 +212,7 @@ export default function PTAWizard() {
                 borderRadius: 8,
                 border: 'none',
                 background: canGoNext ? 'var(--color-primary)' : 'var(--color-text-dim)',
-                color: canGoNext ? '#fff' : 'var(--color-text)',
+                color: canGoNext ? 'var(--color-key-white, #fff)' : 'var(--color-text)',
                 fontSize: 14,
                 fontWeight: 600,
                 cursor: canGoNext ? 'pointer' : 'default',

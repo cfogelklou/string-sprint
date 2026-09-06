@@ -15,7 +15,7 @@ export default function ProfilePicker() {
       style={{
         background: 'var(--color-surface)',
         color: 'var(--color-text)',
-        border: '1px solid rgba(255,255,255,0.15)',
+        border: '1px solid var(--color-control-border, rgba(255, 255, 255, 0.15))',
         borderRadius: 6,
         padding: '6px 10px',
         fontSize: 14,

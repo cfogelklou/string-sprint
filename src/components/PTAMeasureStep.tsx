@@ -4,9 +4,9 @@ import { B_INPUT_MIN, B_INPUT_MAX } from '@/types';
 
 function errorColor(pct: number | null): string {
   if (pct === null) return 'var(--color-text-dim)';
-  if (pct < 5) return '#00e676';
-  if (pct < 10) return '#ffaa00';
-  return '#ff4444';
+  if (pct < 5) return 'var(--color-success, #00e676)';
+  if (pct < 10) return 'var(--color-warning, #ffaa00)';
+  return 'var(--color-danger, #ff4444)';
 }
 
 export default function PTAMeasureStep() {

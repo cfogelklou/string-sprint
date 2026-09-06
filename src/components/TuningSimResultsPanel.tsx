@@ -8,10 +8,10 @@ import { useModalDialog } from '@/hooks/useModalDialog';
 // ---------------------------------------------------------------------------
 
 function gradeColor(grade: string): string {
-  if (grade === 'A+' || grade === 'A') return '#00e676';
-  if (grade === 'B') return '#ffaa00';
-  if (grade === 'C') return '#ff6600';
-  return '#ff4444'; // D, F
+  if (grade === 'A+' || grade === 'A') return 'var(--color-success, #00e676)';
+  if (grade === 'B') return 'var(--color-warning, #ffaa00)';
+  if (grade === 'C') return 'var(--color-target, #ff6600)';
+  return 'var(--color-danger, #ff4444)'; // D, F
 }
 
 // ---------------------------------------------------------------------------
@@ -170,7 +170,7 @@ export default function TuningSimResultsPanel() {
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'var(--color-overlay, rgba(0, 0, 0, 0.5))',
           zIndex: 100,
         }}
       />
@@ -187,7 +187,7 @@ export default function TuningSimResultsPanel() {
           bottom: 0,
           left: 0,
           right: 0,
-          maxHeight: '70vh',
+          maxHeight: '80vh',
           background: 'var(--color-surface)',
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
@@ -205,7 +205,7 @@ export default function TuningSimResultsPanel() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '8px 16px',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            borderBottom: '1px solid var(--color-control-border, rgba(255, 255, 255, 0.12))',
             flexShrink: 0,
           }}
         >
@@ -214,7 +214,7 @@ export default function TuningSimResultsPanel() {
               width: 32,
               height: 4,
               borderRadius: 2,
-              background: 'rgba(255,255,255,0.2)',
+              background: 'var(--color-control-border, rgba(255, 255, 255, 0.2))',
             }}
           />
           <span id="tuning-results-title" style={{ fontSize: 14, fontWeight: 600 }}>Results</span>
@@ -256,7 +256,7 @@ export default function TuningSimResultsPanel() {
             style={{
               width: '100%',
               height: 160,
-              background: 'rgba(0,0,0,0.3)',
+              background: 'var(--color-surface-sunken, rgba(0, 0, 0, 0.3))',
               borderRadius: 6,
               display: 'block',
             }}
@@ -296,7 +296,7 @@ export default function TuningSimResultsPanel() {
               gap: 0,
               fontSize: 11,
               color: 'var(--color-text-dim)',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              borderBottom: '1px solid var(--color-control-border, rgba(255, 255, 255, 0.12))',
               paddingBottom: 4,
               marginBottom: 4,
               fontWeight: 600,
@@ -310,7 +310,7 @@ export default function TuningSimResultsPanel() {
           </div>
           {notes.map((note) => {
             const absError = Math.abs(note.error);
-            const color = absError < 0.5 ? '#00e676' : absError < 1 ? '#7bc67b' : absError < 2 ? '#ffaa00' : '#ff4444';
+            const color = absError < 0.5 ? 'var(--color-success, #00e676)' : absError < 1 ? '#7bc67b' : absError < 2 ? 'var(--color-warning, #ffaa00)' : 'var(--color-danger, #ff4444)';
             const emoji = absError < 0.5 ? '✓' : absError < 2 ? '~' : '✗';
             return (
               <div
@@ -321,7 +321,7 @@ export default function TuningSimResultsPanel() {
                   gap: 0,
                   fontSize: 12,
                   padding: '3px 0',
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  borderBottom: '1px solid var(--color-control, rgba(255, 255, 255, 0.04))',
                 }}
               >
                 <span style={{ fontWeight: 600 }}>{midiNoteToName(note.midiNote)}</span>
@@ -356,7 +356,7 @@ export default function TuningSimResultsPanel() {
               background: 'var(--color-primary)',
               border: 'none',
               borderRadius: 6,
-              color: '#fff',
+              color: 'var(--color-key-white, #fff)',
               fontSize: 13,
               fontWeight: 600,
               padding: '8px 0',
@@ -375,7 +375,7 @@ export default function TuningSimResultsPanel() {
               background: 'var(--color-accent)',
               border: 'none',
               borderRadius: 6,
-              color: '#fff',
+              color: 'var(--color-key-white, #fff)',
               fontSize: 13,
               fontWeight: 600,
               padding: '8px 0',

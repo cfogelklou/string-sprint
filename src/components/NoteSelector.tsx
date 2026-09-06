@@ -45,10 +45,10 @@ export default function NoteSelector() {
         gap: 4,
         padding: '2px 8px',
         borderRadius: 4,
-        background: isToneActive ? 'rgba(0, 230, 118, 0.15)' : 'transparent',
+        background: isToneActive ? 'var(--color-success-dim, rgba(0, 230, 118, 0.15))' : 'transparent',
         color: isToneActive ? 'var(--color-accent)' : 'var(--color-text-dim)',
         fontWeight: isToneActive ? 700 : 400,
-        border: isToneActive ? '1px solid rgba(0, 230, 118, 0.3)' : '1px solid transparent',
+        border: isToneActive ? '1px solid var(--color-success-muted, rgba(0, 230, 118, 0.3))' : '1px solid transparent',
         whiteSpace: 'nowrap',
       }}>
         {isToneActive ? 'PTA' : 'B'}: {bValue}

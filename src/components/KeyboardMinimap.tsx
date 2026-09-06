@@ -65,7 +65,7 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
         maxWidth: totalWidth,
         height: 10,
         position: 'relative',
-        background: '#e0e0e0',
+        background: 'var(--color-text, #e0e0e0)',
         borderRadius: 2,
         overflow: 'hidden',
         margin: '0 auto',
@@ -92,10 +92,10 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
               background: isSelected
                 ? 'var(--color-accent, #4a9eff)'
                 : isCommitted
-                  ? 'rgba(0, 230, 118, 0.5)'
+                  ? 'var(--color-success-muted, rgba(0, 230, 118, 0.5))'
                   : isActive
-                    ? 'rgba(74, 158, 255, 0.5)'
-                    : '#f5f5f5',
+                    ? 'var(--color-accent-muted, rgba(74, 158, 255, 0.5))'
+                    : 'var(--color-key-white-bg, #f5f5f5)',
               boxSizing: 'border-box',
             }}
           />
@@ -131,10 +131,10 @@ export default function KeyboardMinimap({ onJumpToNote }: KeyboardMinimapProps) 
                 background: isSelected
                   ? 'var(--color-accent, #4a9eff)'
                   : isCommitted
-                    ? 'rgba(0, 230, 118, 0.5)'
+                    ? 'var(--color-success-muted, rgba(0, 230, 118, 0.5))'
                     : isActive
-                      ? 'rgba(74, 158, 255, 0.7)'
-                      : '#1a1a2e',
+                      ? 'var(--color-accent-dim, rgba(74, 158, 255, 0.7))'
+                      : 'var(--color-key-black, #1a1a2e)',
                 zIndex: 2,
                 borderRadius: '0 0 1px 1px',
               }}

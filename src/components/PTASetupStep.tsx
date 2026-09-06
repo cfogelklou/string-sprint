@@ -55,7 +55,7 @@ export default function PTASetupStep() {
                   ? 'var(--color-accent)'
                   : 'var(--color-text-dim)',
                 background: ptaState.pianoType === type
-                  ? 'rgba(0, 230, 118, 0.15)'
+                  ? 'var(--color-success-dim, rgba(0, 230, 118, 0.15))'
                   : 'transparent',
                 color: ptaState.pianoType === type
                   ? 'var(--color-accent)'
@@ -95,7 +95,7 @@ export default function PTASetupStep() {
                   ? 'var(--color-accent)'
                   : 'var(--color-text-dim)',
                 background: ptaState.octaveStyle === os.value
-                  ? 'rgba(0, 230, 118, 0.15)'
+                  ? 'var(--color-success-dim, rgba(0, 230, 118, 0.15))'
                   : 'transparent',
                 color: ptaState.octaveStyle === os.value
                   ? 'var(--color-accent)'

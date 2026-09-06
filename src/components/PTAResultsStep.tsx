@@ -2,10 +2,10 @@ import { Fragment } from 'react';
 import { usePTAStore } from '@/store/ptaStore';
 
 function gradeColor(grade: string): string {
-  if (grade === 'A+' || grade === 'A') return '#00e676';
-  if (grade === 'B') return '#ffaa00';
-  if (grade === 'C') return '#ff6600';
-  return '#ff4444';
+  if (grade === 'A+' || grade === 'A') return 'var(--color-success, #00e676)';
+  if (grade === 'B') return 'var(--color-warning, #ffaa00)';
+  if (grade === 'C') return 'var(--color-target, #ff6600)';
+  return 'var(--color-danger, #ff4444)';
 }
 
 export default function PTAResultsStep() {

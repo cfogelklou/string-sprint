@@ -74,7 +74,7 @@ export default function HelpSheet() {
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'var(--color-overlay, rgba(0, 0, 0, 0.5))',
           zIndex: 100,
         }}
       />
@@ -109,7 +109,7 @@ export default function HelpSheet() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '8px 16px',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            borderBottom: '1px solid var(--color-control-border, rgba(255, 255, 255, 0.12))',
             flexShrink: 0,
           }}
         >
@@ -118,7 +118,7 @@ export default function HelpSheet() {
               width: 32,
               height: 4,
               borderRadius: 2,
-              background: 'rgba(255,255,255,0.2)',
+              background: 'var(--color-control-border, rgba(255, 255, 255, 0.2))',
             }}
           />
           <span id="help-sheet-title" style={{ fontSize: 14, fontWeight: 600 }}>Help</span>
@@ -190,7 +190,7 @@ export default function HelpSheet() {
                     lineHeight: 1.4,
                     margin: '6px 0 0',
                     padding: '8px 10px',
-                    background: 'rgba(0, 230, 118, 0.08)',
+                    background: 'var(--color-success-dim, rgba(0, 230, 118, 0.08))',
                     border: '1px solid var(--color-accent)',
                     borderRadius: 4,
                     color: 'var(--color-text)',

@@ -15,7 +15,7 @@ export default function TuningSimGameBar() {
   // Shared button style
   const btnStyle = (bg: string) => ({
     background: bg,
-    border: '1px solid rgba(255,255,255,0.12)',
+    border: '1px solid var(--color-control-border, rgba(255, 255, 255, 0.12))',
     borderRadius: 6,
     color: '#fff',
     fontSize: 12,
@@ -44,7 +44,7 @@ export default function TuningSimGameBar() {
         onClick={() => selectedKeyId && commitNote(selectedKeyId)}
         disabled={!canCommit}
         style={{
-          ...btnStyle(canCommit ? 'var(--color-primary)' : 'rgba(255,255,255,0.04)'),
+          ...btnStyle(canCommit ? 'var(--color-primary)' : 'var(--color-control, rgba(255, 255, 255, 0.04))'),
           opacity: canCommit ? 1 : 0.4,
           cursor: canCommit ? 'pointer' : 'not-allowed',
         }}
@@ -55,14 +55,14 @@ export default function TuningSimGameBar() {
         onClick={revealResults}
         disabled={committedCount === 0}
         style={{
-          ...btnStyle(committedCount > 0 ? 'var(--color-accent)' : 'rgba(255,255,255,0.04)'),
+          ...btnStyle(committedCount > 0 ? 'var(--color-accent)' : 'var(--color-control, rgba(255, 255, 255, 0.04))'),
           opacity: committedCount > 0 ? 1 : 0.4,
           cursor: committedCount > 0 ? 'pointer' : 'not-allowed',
         }}
       >
         Reveal Results
       </button>
-      <button onClick={randomizeUncommitted} style={btnStyle('rgba(255,255,255,0.08)')}>
+      <button onClick={randomizeUncommitted} style={btnStyle('var(--color-control, rgba(255, 255, 255, 0.08))')}>
         Randomize
       </button>
       <button onClick={stopTuningSim} style={btnStyle('var(--color-destructive)')}>

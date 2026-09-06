@@ -242,7 +242,23 @@ export const usePianoStore = create<PianoStore>()((set, get) => ({
   },
 
   setInfiniteSustain: (value: boolean) => {
-    set({ infiniteSustain: value });
+    if (!value) {
+      const { activeTones } = get();
+      const nextTones = new Map(activeTones);
+      let changed = false;
+      for (const [midi, config] of activeTones) {
+        if (config.infiniteSustain !== true) {
+          nextTones.delete(midi);
+          changed = true;
+        }
+      }
+      set({
+        infiniteSustain: value,
+        ...(changed ? { activeTones: nextTones } : {}),
+      });
+    } else {
+      set({ infiniteSustain: value });
+    }
   },
 
   setCustomParam: (paramKey: keyof RigaudParams, value: number) => {

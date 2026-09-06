@@ -159,7 +159,7 @@ export default function BCurveEditor() {
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'var(--color-overlay, rgba(0, 0, 0, 0.5))',
           zIndex: 100,
         }}
       />
@@ -176,7 +176,7 @@ export default function BCurveEditor() {
           bottom: 0,
           left: 0,
           right: 0,
-          maxHeight: '70vh',
+          maxHeight: '80vh',
           background: 'var(--color-surface)',
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
@@ -194,7 +194,7 @@ export default function BCurveEditor() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '8px 16px',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            borderBottom: '1px solid var(--color-control-border, rgba(255, 255, 255, 0.12))',
             flexShrink: 0,
           }}
         >
@@ -203,7 +203,7 @@ export default function BCurveEditor() {
               width: 32,
               height: 4,
               borderRadius: 2,
-              background: 'rgba(255,255,255,0.2)',
+              background: 'var(--color-control-border, rgba(255, 255, 255, 0.2))',
             }}
           />
           <span id="b-curve-editor-title" style={{ fontSize: 14, fontWeight: 600 }}>B Curve Editor</span>
@@ -231,7 +231,7 @@ export default function BCurveEditor() {
             style={{
               width: '100%',
               height: 180,
-              background: 'rgba(0,0,0,0.3)',
+              background: 'var(--color-surface-sunken, rgba(0, 0, 0, 0.3))',
               borderRadius: 6,
               display: 'block',
             }}
@@ -264,8 +264,8 @@ export default function BCurveEditor() {
             }}
             style={{
               marginLeft: 'auto',
-              background: useCustomProfile ? 'var(--color-primary)' : 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.12)',
+              background: useCustomProfile ? 'var(--color-primary)' : 'var(--color-control, rgba(255, 255, 255, 0.08))',
+              border: '1px solid var(--color-control-border, rgba(255, 255, 255, 0.12))',
               borderRadius: 6,
               color: 'var(--color-text)',
               fontSize: 12,
@@ -285,9 +285,9 @@ export default function BCurveEditor() {
               onChange={(e) => setProfile(e.target.value as PianoProfileName)}
               style={{
                 width: '100%',
-                background: 'rgba(0,0,0,0.3)',
+                background: 'var(--color-surface-sunken, rgba(0, 0, 0, 0.3))',
                 color: 'var(--color-text)',
-                border: '1px solid rgba(255,255,255,0.12)',
+                border: '1px solid var(--color-control-border, rgba(255, 255, 255, 0.12))',
                 borderRadius: 6,
                 padding: '6px 8px',
                 fontSize: 13,
@@ -332,8 +332,8 @@ export default function BCurveEditor() {
                   step={step}
                   onChange={(e) => setCustomParam(key, parseFloat(e.target.value) || 0)}
                   style={{
-                    background: 'rgba(0,0,0,0.3)',
-                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: 'var(--color-surface-sunken, rgba(0, 0, 0, 0.3))',
+                    border: '1px solid var(--color-control-border, rgba(255, 255, 255, 0.12))',
                     borderRadius: 4,
                     color: 'var(--color-text)',
                     padding: '4px 6px',

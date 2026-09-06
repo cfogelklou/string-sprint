@@ -65,3 +65,37 @@ describe('usePTAStore sample truth values', () => {
     usePTAStore.getState().stopPTAMode();
   });
 });
+
+describe('usePianoStore infinite sustain semantics', () => {
+  beforeEach(() => {
+    usePianoStore.getState().stopAll();
+    usePianoStore.getState().setInfiniteSustain(false);
+  });
+
+  it('removes ordinary active tones when infinite sustain is disabled', () => {
+    usePianoStore.getState().setInfiniteSustain(true);
+    usePianoStore.getState().playNote(69);
+    expect(usePianoStore.getState().activeTones.has(69)).toBe(true);
+
+    usePianoStore.getState().setInfiniteSustain(false);
+    expect(usePianoStore.getState().activeTones.has(69)).toBe(false);
+    expect(usePianoStore.getState().infiniteSustain).toBe(false);
+  });
+
+  it('preserves dedicated tones with explicit infiniteSustain: true when global mode is disabled', () => {
+    usePianoStore.getState().playCustomTone(9999, {
+      frequency: 110,
+      B: 0,
+      centsOffset: 0,
+      numPartials: 6,
+      sustainDuration: 2.0,
+      infiniteSustain: true,
+    });
+
+    expect(usePianoStore.getState().activeTones.has(9999)).toBe(true);
+
+    usePianoStore.getState().setInfiniteSustain(false);
+    expect(usePianoStore.getState().activeTones.has(9999)).toBe(true);
+  });
+});
+

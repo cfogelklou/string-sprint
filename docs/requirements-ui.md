@@ -18,7 +18,11 @@ REQ-UI-007 | behavior | advertising | The application does not render or initial
 
 REQ-UI-008 | behavior | sustain | Infinite Sustain applies to ordinary piano keys as well as dedicated tone controls. | Given Infinite Sustain is enabled, when a user releases a normal piano key, then its tone remains active until the user explicitly stops it or disables the mode. | Impl ✅ | Test ✅ (VirtualKeyboard.layout.test.tsx, pianoStore.test.ts, audioSync.test.ts)
 
-REQ-UI-009 | quality | cents jog wheel | The cents adjustment surface behaves and reads as a rotary jog wheel. | Given a selected note, when the user turns or drags the wheel clockwise or counter-clockwise, then its value moves sharper or flatter respectively within -100¢ to +100¢; the exact value is visible outside Tuning Practice and remains unavailable in Tuning Practice. | Impl ✅ | Test ✅ (CentsJogWheel.a11y.test.tsx)
+REQ-UI-010 | quality | zero-shift tuner layout | The tuner deck and cents adjustment structure are always rendered and mounted across initial load and key selection changes without height collapse or layout jump. | Given initial load before key selection, when the application renders, then the full deck structure (Note card, dial, and step buttons) is visible; selecting a note updates values without shifting downstream elements. | Impl ✅ | Test ✅ (CentsJogWheel.a11y.test.tsx)
+
+REQ-UI-011 | quality | horizontal tuner deck | The top tuning interface presents a balanced horizontal 3-column deck (vertical note acoustics card left, rotary jog wheel dial center, vertical step matrix right). | Given the tuner renders, when inspected, then Note/Octave/Freq/B/Partials are stacked on the left, the wheel dial and reset button are centered, and fine step buttons are stacked on the right. | Impl ✅ | Test ✅ (CentsJogWheel.a11y.test.tsx, NoteSelector.suba0.test.tsx)
+
+REQ-UI-012 | behavior | brag mode precision | Cents adjustment and display support ±0.01¢ step buttons and hundredths precision. | Given a selected note, when +0.01¢ or −0.01¢ is activated, then cents offset is adjusted by ±0.01 and the readout displays two-decimal precision. | Impl ✅ | Test ✅ (CentsJogWheel.a11y.test.tsx)
 
 ## Behavior scenarios
 
@@ -32,7 +36,7 @@ SCN-UI-004 | REQ-UI-007 | Given the application renders, when its DOM is inspect
 
 SCN-UI-005 | REQ-UI-008 | Given Infinite Sustain is enabled, when a user plays and releases a normal piano key, then the tone stays active until explicitly stopped. | component | VirtualKeyboard.layout.test.tsx, pianoStore.test.ts, audioSync.test.ts
 
-SCN-UI-006 | REQ-UI-002, REQ-UI-005, REQ-UI-009 | Given a selected note, when a user operates the cents wheel by pointer, touch, or keyboard, then the value changes in the intended direction and the game mode retains no numerical feedback. | component | CentsJogWheel.a11y.test.tsx
+SCN-UI-006 | REQ-UI-002, REQ-UI-005, REQ-UI-009, REQ-UI-010, REQ-UI-011, REQ-UI-012 | Given a selected note, when a user operates the cents wheel by pointer, touch, or keyboard, then the value changes in the intended direction, ±0.01¢ brag steps function, the horizontal deck stays rock-solid with zero layout jump, and the game mode retains no numerical feedback. | component | CentsJogWheel.a11y.test.tsx
 
 ## Verification record
 
@@ -40,3 +44,4 @@ SCN-UI-006 | REQ-UI-002, REQ-UI-005, REQ-UI-009 | Given a selected note, when a 
 - 2026-09-06: Visual screenshots verified the redesigned jog wheel at desktop and 390px mobile widths with no overlap or clipping.
 - 2026-09-06: Responsive and motion test suite `src/responsive.test.ts` passed for max-width 360px, max-height 520px, and `prefers-reduced-motion: reduce`.
 - 2026-09-06: Impeccable detector reported 0 findings. `unslop-ui` scored 2/100 for the intentional target-key pulse; retained because it communicates the active tuning target.
+- 2026-09-07: Implemented horizontal tuner deck, always-mounted zero-shift wheel structure, and ±0.01¢ brag mode buttons. Full linting (0 errors), vitest suite (160/160 passing), and production build passed.

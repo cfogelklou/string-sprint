@@ -22,51 +22,32 @@ export default function NoteSelector() {
   const isToneActive = selectedKeyId !== null && activeTones.has(selectedKeyId);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
-        padding: '8px 12px',
-        background: 'var(--color-surface, #1e1e2e)',
-        color: 'var(--color-text, #e0e0e0)',
-      }}
-    >
+    <div className="note-selector-card" data-testid="status-area">
       {/* Note + freq */}
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 24, fontWeight: 700 }}>{noteName}</span>
-        <span style={{ fontSize: 13, opacity: 0.6 }}>{frequency} Hz</span>
+      <div className="note-selector-pitch">
+        <span className="note-selector-name">{noteName}</span>
+        <span className="note-selector-freq">{frequency} Hz</span>
       </div>
 
       {/* B value / PTA */}
-      <div style={{
-        fontSize: 11,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '2px 8px',
-        borderRadius: 4,
-        background: isToneActive ? 'var(--color-success-dim, rgba(0, 230, 118, 0.15))' : 'transparent',
-        color: isToneActive ? 'var(--color-accent)' : 'var(--color-text-dim)',
-        fontWeight: isToneActive ? 700 : 400,
-        border: isToneActive ? '1px solid var(--color-success-muted, rgba(0, 230, 118, 0.3))' : '1px solid transparent',
-        whiteSpace: 'nowrap',
-      }}>
+      <div className={`note-selector-b${isToneActive ? ' active' : ''}`}>
         {isToneActive ? 'PTA' : 'B'}: {bValue}
       </div>
 
       {/* Partials */}
-      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, whiteSpace: 'nowrap' }}>
-        <span style={{ opacity: 0.6 }}>Partials</span>
-        <span style={{ fontWeight: 600 }}>{numPartials}</span>
+      <label className="note-selector-partials">
+        <div className="note-selector-partials-header">
+          <span>Partials</span>
+          <span className="note-selector-partials-count">{numPartials}</span>
+        </div>
         <input
           type="range"
           min={1}
           max={10}
           value={numPartials}
           onChange={(e) => setNumPartials(Number(e.target.value))}
-          style={{ width: 60 }}
+          className="note-selector-partials-slider"
+          aria-label="Number of partials"
         />
       </label>
     </div>

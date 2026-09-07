@@ -84,13 +84,9 @@ export default function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', overflow: 'hidden' }}>
       <div id="fakepiano-app" style={{ flex: 1, minHeight: 0 }}>
-        {/* Status area */}
-        <section className="status-area" data-testid="status-area">
+        {/* Tuner area (Note info left, Jog wheel center, Step buttons right) */}
+        <section className="tuner-area" data-testid="tuner-area">
           <NoteSelector />
-        </section>
-
-        {/* Cents jog wheel area */}
-        <section className="cents-area" data-testid="cents-area">
           <CentsJogWheel />
         </section>
 
